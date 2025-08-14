@@ -234,14 +234,15 @@
         }
         
         .week-lectures {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
         
         .lecture-group {
             display: flex;
             flex-direction: column;
+            width: 100%;
         }
         
         .week-card::before {
@@ -384,10 +385,6 @@
                 max-width: 100%;
             }
             
-            .week-lectures {
-                grid-template-columns: 1fr;
-                gap: 16px;
-            }
             
             .controls {
                 flex-direction: column;
@@ -539,9 +536,14 @@
             
             // Skip if credentials not available
             if (!token || !owner || !repo || !currentClass) {
-                showStatus(`Selected ${CLASSES[currentClass]} - Enter credentials to load current links`, 'error');
+                console.log('Skipping auto-load: missing credentials or class not selected');
+                if (currentClass) {
+                    showStatus(`${CLASSES[currentClass]} selected - Enter GitHub credentials to load current links`, 'error');
+                }
                 return;
             }
+            
+            console.log('Auto-loading current links for:', currentClass);
             
             try {
                 const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`, {
@@ -841,9 +843,12 @@
                 selectClass(classKey);
             });
             
-            // Auto-select AVC 185 on load if credentials are available
-            const initialClass = 'avc185';
-            selectClass(initialClass);
+            // Auto-select AVC 185 on load - delay to ensure credentials are loaded
+            setTimeout(() => {
+                const initialClass = 'avc185';
+                console.log('Auto-selecting AVC 185 on page load...');
+                selectClass(initialClass);
+            }, 100);
             
             document.getElementById('updateLinks').addEventListener('click', function(e) {
                 console.log('Update Repository button clicked');
@@ -885,7 +890,14 @@
             });
             
             // Auto-save when credentials change (if remember is checked)
-            document.getElementById('githubToken').addEventListener('input', autoSaveCredentials);
+            // Also retry auto-loading if credentials are entered after class is selected
+            document.getElementById('githubToken').addEventListener('input', function() {
+                autoSaveCredentials();
+                if (currentClass && this.value) {
+                    console.log('GitHub token entered, retrying auto-load...');
+                    setTimeout(autoLoadCurrentLinks, 500);
+                }
+            });
             document.getElementById('repoOwner').addEventListener('input', autoSaveCredentials);
             document.getElementById('repoName').addEventListener('input', autoSaveCredentials);
             
