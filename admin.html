@@ -491,8 +491,7 @@
                 </div>
                 
                 <div class="controls">
-                    <button class="btn" id="updateLinks">Update Repository</button>
-                    <button class="btn" id="testBtn" style="margin-left: 20px; background: #666;">Test Button</button>
+                    <button class="btn" id="updateLinks">Update All Weeks</button>
                 </div>
                 
                 <div class="status" id="status"></div>
@@ -511,11 +510,6 @@
         
         let currentClass = null;
         
-        // Test function
-        function testFunction() {
-            console.log('Test button clicked! JavaScript is working.');
-            showStatus('Test successful! Buttons are working.', 'success');
-        }
         
         // Show status message
         function showStatus(message, type) {
@@ -662,6 +656,9 @@
                                 <input type="url" id="week${week}-lecture2" placeholder="https://www.youtube.com/watch?v=...">
                             </div>
                         </div>
+                        <div class="week-update-controls" style="margin-top: 16px; text-align: center;">
+                            <button class="btn week-update-btn" data-week="${week}" style="padding: 8px 16px; font-size: 12px;">Update Week ${week}</button>
+                        </div>
                     </div>
                 `;
                 grid.appendChild(weekCard);
@@ -670,7 +667,141 @@
             // Add click event listeners to all clickable labels
             addClickableLabelsEventListeners();
             
+            // Add event listeners to week update buttons
+            addWeekUpdateButtonListeners();
+            
             console.log('Week forms generated');
+        }
+        
+        // Add event listeners for week update buttons
+        function addWeekUpdateButtonListeners() {
+            document.querySelectorAll('.week-update-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const week = this.dataset.week;
+                    updateSingleWeek(week);
+                });
+            });
+        }
+        
+        // Update a single week's lectures
+        async function updateSingleWeek(week) {
+            console.log(`updateSingleWeek called for week ${week}`);
+            
+            if (!currentClass) {
+                showStatus('Please select a class first', 'error');
+                return;
+            }
+            
+            const token = document.getElementById('githubToken').value;
+            const owner = document.getElementById('repoOwner').value;
+            const repo = document.getElementById('repoName').value;
+            
+            if (!token || !owner || !repo) {
+                showStatus('Please fill in all GitHub authentication fields', 'error');
+                return;
+            }
+            
+            // Collect links for this specific week
+            const weekLinks = {};
+            const lecture1Input = document.getElementById(`week${week}-lecture1`);
+            const lecture2Input = document.getElementById(`week${week}-lecture2`);
+            
+            if (lecture1Input && lecture1Input.value) {
+                const url = normalizeYouTubeUrl(lecture1Input.value);
+                if (url) weekLinks[`week${week}-lecture1`] = url;
+            }
+            
+            if (lecture2Input && lecture2Input.value) {
+                const url = normalizeYouTubeUrl(lecture2Input.value);
+                if (url) weekLinks[`week${week}-lecture2`] = url;
+            }
+            
+            if (Object.keys(weekLinks).length === 0) {
+                showStatus(`No lecture URLs found for Week ${week}. Please enter some URLs first.`, 'error');
+                return;
+            }
+            
+            // Visual feedback for the specific week button
+            const weekButton = document.querySelector(`[data-week="${week}"]`);
+            const originalText = weekButton.textContent;
+            const originalBackground = weekButton.style.background;
+            
+            weekButton.style.background = '#ffa500';
+            weekButton.textContent = 'Updating...';
+            weekButton.disabled = true;
+            
+            showStatus(`Updating Week ${week}...`, 'loading');
+            
+            try {
+                // Get current file
+                const getResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!getResponse.ok) {
+                    const errorText = await getResponse.text();
+                    console.error('GitHub API error response:', errorText);
+                    throw new Error(`Failed to get current file: ${getResponse.status} - ${errorText}`);
+                }
+                
+                const currentFile = await getResponse.json();
+                const currentContent = atob(currentFile.content);
+                console.log('Successfully retrieved current file for week update');
+                
+                let updatedContent = currentContent;
+                
+                // Update each lecture link for this week
+                for (const [lectureKey, url] of Object.entries(weekLinks)) {
+                    const lecturePattern = new RegExp(`('${lectureKey}':\\s*')[^']+(')`);
+                    const match = updatedContent.match(lecturePattern);
+                    
+                    if (match) {
+                        updatedContent = updatedContent.replace(lecturePattern, `$1${url}$2`);
+                        console.log(`Updated ${lectureKey} = ${url}`);
+                    } else {
+                        console.warn(`Could not find pattern for ${lectureKey}`);
+                    }
+                }
+                
+                // Update file
+                const updateResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `Update ${CLASSES[currentClass]} Week ${week} lecture links`,
+                        content: btoa(updatedContent),
+                        sha: currentFile.sha
+                    })
+                });
+                
+                if (!updateResponse.ok) {
+                    const errorText = await updateResponse.text();
+                    console.error('Update failed:', errorText);
+                    throw new Error(`Failed to update file: ${updateResponse.status} - ${errorText}`);
+                }
+                
+                const updateResult = await updateResponse.json();
+                console.log('Week update successful:', updateResult);
+                
+                showStatus(`Week ${week} updated successfully! ${Object.keys(weekLinks).length} links updated for ${CLASSES[currentClass]}.`, 'success');
+                
+            } catch (error) {
+                console.error('Error updating week:', error);
+                showStatus(`Error updating Week ${week}: ${error.message}`, 'error');
+            } finally {
+                // Reset button
+                weekButton.style.background = originalBackground;
+                weekButton.textContent = originalText;
+                weekButton.disabled = false;
+            }
         }
         
         // Add event listeners for clickable labels
@@ -918,8 +1049,6 @@
             // Load saved credentials first
             loadCredentials();
             
-            // Test button
-            document.getElementById('testBtn').addEventListener('click', testFunction);
             
             // Class dropdown
             document.getElementById('classSelect').addEventListener('change', function() {
