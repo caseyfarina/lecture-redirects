@@ -207,6 +207,12 @@
                 <label for="repoName">Repository Name:</label>
                 <input type="text" id="repoName" placeholder="lecture-redirects">
             </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="rememberCredentials"> Remember credentials (stored locally in browser)
+                </label>
+                <button type="button" class="btn" id="clearCredentials" style="margin-left: 10px; padding: 8px 16px; font-size: 12px;">Clear Saved</button>
+            </div>
         </div>
         
         <div class="section">
@@ -554,9 +560,56 @@
             }
         }
         
+        // Save credentials to localStorage
+        function saveCredentials() {
+            const shouldRemember = document.getElementById('rememberCredentials').checked;
+            
+            if (shouldRemember) {
+                const credentials = {
+                    token: document.getElementById('githubToken').value,
+                    owner: document.getElementById('repoOwner').value,
+                    repo: document.getElementById('repoName').value
+                };
+                localStorage.setItem('lectureAdminCredentials', JSON.stringify(credentials));
+                console.log('Credentials saved to localStorage');
+            }
+        }
+        
+        // Load credentials from localStorage
+        function loadCredentials() {
+            const saved = localStorage.getItem('lectureAdminCredentials');
+            if (saved) {
+                try {
+                    const credentials = JSON.parse(saved);
+                    document.getElementById('githubToken').value = credentials.token || '';
+                    document.getElementById('repoOwner').value = credentials.owner || '';
+                    document.getElementById('repoName').value = credentials.repo || '';
+                    document.getElementById('rememberCredentials').checked = true;
+                    console.log('Credentials loaded from localStorage');
+                } catch (error) {
+                    console.error('Error loading saved credentials:', error);
+                    localStorage.removeItem('lectureAdminCredentials');
+                }
+            }
+        }
+        
+        // Clear saved credentials
+        function clearCredentials() {
+            localStorage.removeItem('lectureAdminCredentials');
+            document.getElementById('githubToken').value = '';
+            document.getElementById('repoOwner').value = '';
+            document.getElementById('repoName').value = '';
+            document.getElementById('rememberCredentials').checked = false;
+            showStatus('Saved credentials cleared', 'success');
+            console.log('Credentials cleared from localStorage');
+        }
+
         // Initialize when DOM loads
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded - initializing admin interface');
+            
+            // Load saved credentials first
+            loadCredentials();
             
             // Test button
             document.getElementById('testBtn').addEventListener('click', testFunction);
@@ -591,6 +644,30 @@
                     btn.disabled = false;
                 });
             });
+            
+            // Clear credentials button
+            document.getElementById('clearCredentials').addEventListener('click', clearCredentials);
+            
+            // Auto-save credentials when checkbox is checked and fields change
+            function autoSaveCredentials() {
+                if (document.getElementById('rememberCredentials').checked) {
+                    saveCredentials();
+                }
+            }
+            
+            // Save credentials when remember checkbox is checked
+            document.getElementById('rememberCredentials').addEventListener('change', function() {
+                if (this.checked) {
+                    saveCredentials();
+                } else {
+                    localStorage.removeItem('lectureAdminCredentials');
+                }
+            });
+            
+            // Auto-save when credentials change (if remember is checked)
+            document.getElementById('githubToken').addEventListener('input', autoSaveCredentials);
+            document.getElementById('repoOwner').addEventListener('input', autoSaveCredentials);
+            document.getElementById('repoName').addEventListener('input', autoSaveCredentials);
             
             console.log('Admin interface initialized successfully');
         });
