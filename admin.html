@@ -443,8 +443,23 @@
             const owner = document.getElementById('repoOwner').value;
             const repo = document.getElementById('repoName').value;
             
+            console.log('GitHub credentials:', { 
+                tokenLength: token ? token.length : 0,
+                owner: owner,
+                repo: repo 
+            });
+            
             if (!token || !owner || !repo) {
                 showStatus('Please fill in all GitHub authentication fields', 'error');
+                return;
+            }
+            
+            // Collect links first to see what we're trying to update
+            const newLinks = collectLectureLinks();
+            console.log('Collected links for update:', newLinks);
+            
+            if (Object.keys(newLinks).length === 0) {
+                showStatus('No lecture URLs found to update. Please enter some URLs first.', 'error');
                 return;
             }
             
@@ -460,15 +475,17 @@
                 });
                 
                 if (!getResponse.ok) {
-                    throw new Error(`Failed to get current file: ${getResponse.status}`);
+                    const errorText = await getResponse.text();
+                    console.error('GitHub API error response:', errorText);
+                    throw new Error(`Failed to get current file: ${getResponse.status} - ${errorText}`);
                 }
                 
                 const currentFile = await getResponse.json();
                 const currentContent = atob(currentFile.content);
+                console.log('Successfully retrieved current file, length:', currentContent.length);
                 
-                // Collect new links
-                const newLinks = collectLectureLinks();
-                console.log('Collected links:', newLinks);
+                // We already collected links above, use the same variable
+                console.log('Processing links for class:', currentClass, newLinks);
                 
                 // Build new class section
                 let newClassSection = '';
@@ -486,7 +503,17 @@
                 
                 // Replace the class section in the content
                 const classPattern = new RegExp(`(\\s*'${currentClass}':\\s*\\{)[^}]+(\\s*\\})`);
+                console.log('Regex pattern for class:', classPattern.toString());
+                
+                const match = currentContent.match(classPattern);
+                console.log('Pattern match found:', !!match);
+                
+                if (!match) {
+                    throw new Error(`Could not find class '${currentClass}' in index.html. Please check the file structure.`);
+                }
+                
                 const updatedContent = currentContent.replace(classPattern, `$1\\n${newClassSection}            $2`);
+                console.log('Content updated, new length:', updatedContent.length);
                 
                 // Update file
                 const updateResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`, {
@@ -504,10 +531,15 @@
                 });
                 
                 if (!updateResponse.ok) {
-                    throw new Error(`Failed to update file: ${updateResponse.status}`);
+                    const errorText = await updateResponse.text();
+                    console.error('Update failed:', errorText);
+                    throw new Error(`Failed to update file: ${updateResponse.status} - ${errorText}`);
                 }
                 
-                showStatus('Repository updated successfully!', 'success');
+                const updateResult = await updateResponse.json();
+                console.log('Update successful:', updateResult);
+                
+                showStatus(`Repository updated successfully! ${Object.keys(newLinks).length} links updated for ${CLASSES[currentClass]}.`, 'success');
                 
             } catch (error) {
                 console.error('Error updating repository:', error);
@@ -532,7 +564,26 @@
             
             // Control buttons
             document.getElementById('loadCurrentLinks').addEventListener('click', loadCurrentLinks);
-            document.getElementById('updateLinks').addEventListener('click', updateRepository);
+            
+            document.getElementById('updateLinks').addEventListener('click', function(e) {
+                console.log('Update Repository button clicked');
+                
+                // Visual feedback that button was clicked
+                const btn = this;
+                const originalText = btn.textContent;
+                const originalBackground = btn.style.background;
+                
+                btn.style.background = '#ffa500';
+                btn.textContent = 'Processing...';
+                btn.disabled = true;
+                
+                updateRepository().finally(() => {
+                    // Reset button after operation completes
+                    btn.style.background = originalBackground;
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                });
+            });
             
             console.log('Admin interface initialized successfully');
         });
