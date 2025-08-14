@@ -564,11 +564,12 @@
                 const classRegex = new RegExp(`'${currentClass}':\\s*\\{([^}]+)\\}`, 's');
                 const classMatch = content.match(classRegex);
                 
+                let loadedCount = 0;
+                
                 if (classMatch) {
                     const classContent = classMatch[1];
                     const linkRegex = /'(week\\d+-lecture\\d+)':\\s*'([^']+)'/g;
                     let match;
-                    let loadedCount = 0;
                     
                     while ((match = linkRegex.exec(classContent)) !== null) {
                         const [, key, url] = match;
