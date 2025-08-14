@@ -411,6 +411,74 @@
             animation: fadeIn 0.5s ease;
         }
         
+        /* Class-specific background gradients */
+        body.class-avc185 {
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(242, 5, 68, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(242, 5, 135, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(242, 5, 68, 0.1) 0%, transparent 50%);
+        }
+        
+        body.class-avc200 {
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(124, 5, 242, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(242, 5, 135, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(124, 5, 242, 0.1) 0%, transparent 50%);
+        }
+        
+        body.class-avc240 {
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(5, 108, 242, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(124, 5, 242, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(5, 108, 242, 0.1) 0%, transparent 50%);
+        }
+        
+        body.class-avc285 {
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(242, 5, 135, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(5, 108, 242, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(242, 5, 68, 0.1) 0%, transparent 50%);
+        }
+        
+        /* Visual class indicator in header */
+        .class-indicator {
+            position: absolute;
+            top: 12px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+        
+        body.class-avc185 .class-indicator {
+            background: linear-gradient(135deg, rgba(242, 5, 68, 0.3), rgba(242, 5, 135, 0.3));
+            border: 1px solid rgba(242, 5, 68, 0.4);
+            color: #F20544;
+        }
+        
+        body.class-avc200 .class-indicator {
+            background: linear-gradient(135deg, rgba(124, 5, 242, 0.3), rgba(242, 5, 135, 0.3));
+            border: 1px solid rgba(124, 5, 242, 0.4);
+            color: #7C05F2;
+        }
+        
+        body.class-avc240 .class-indicator {
+            background: linear-gradient(135deg, rgba(5, 108, 242, 0.3), rgba(124, 5, 242, 0.3));
+            border: 1px solid rgba(5, 108, 242, 0.4);
+            color: #056CF2;
+        }
+        
+        body.class-avc285 .class-indicator {
+            background: linear-gradient(135deg, rgba(242, 5, 135, 0.3), rgba(242, 5, 68, 0.3));
+            border: 1px solid rgba(242, 5, 135, 0.4);
+            color: #F20587;
+        }
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .container {
@@ -431,12 +499,21 @@
                 flex-direction: column;
                 align-items: center;
             }
+            
+            .class-indicator {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin-top: 16px;
+                display: inline-block;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <div class="class-indicator" id="classIndicator" style="display: none;">AVC 185</div>
             <h1>Multi-Class Lecture Links Admin</h1>
             <p>Manage YouTube lecture links for all your classes</p>
         </div>
@@ -529,11 +606,23 @@
             console.log('selectClass called with:', classKey);
             currentClass = classKey;
             
+            // Remove all class-specific body classes
+            document.body.classList.remove('class-avc185', 'class-avc200', 'class-avc240', 'class-avc285');
+            
             if (!classKey) {
                 // Hide everything if no class selected
                 document.getElementById('weeksContainer').classList.remove('active');
+                document.getElementById('classIndicator').style.display = 'none';
                 return;
             }
+            
+            // Add class-specific body class for background gradient
+            document.body.classList.add(`class-${classKey}`);
+            
+            // Update and show class indicator
+            const classIndicator = document.getElementById('classIndicator');
+            classIndicator.textContent = CLASSES[classKey];
+            classIndicator.style.display = 'block';
             
             // Update dropdown
             document.getElementById('classSelect').value = classKey;
