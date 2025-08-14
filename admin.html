@@ -643,7 +643,9 @@
             // Show weeks container
             document.getElementById('weeksContainer').classList.add('active');
             
-            // Generate week forms if not already generated
+            // Clear existing forms and regenerate with class-specific labels
+            const grid = document.getElementById('weeksGrid');
+            grid.innerHTML = '';
             generateWeekForms();
             
             // Auto-load current links from repository (delay to ensure forms are rendered)
@@ -725,13 +727,13 @@
         // Generate week input forms
         function generateWeekForms() {
             const grid = document.getElementById('weeksGrid');
-            if (grid.children.length > 0) return; // Already generated
             
             for (let week = 1; week <= 16; week++) {
                 const weekCard = document.createElement('div');
                 weekCard.className = 'week-card';
+                const classDisplayName = currentClass ? CLASSES[currentClass] : 'Week';
                 weekCard.innerHTML = `
-                    <h4>Week ${week}</h4>
+                    <h4>${classDisplayName} Week ${week}</h4>
                     <div class="week-lectures">
                         <div class="lecture-group">
                             <div class="form-group">
@@ -746,7 +748,7 @@
                             </div>
                         </div>
                         <div class="week-update-controls" style="margin-top: 16px; text-align: center;">
-                            <button class="btn week-update-btn" data-week="${week}" style="padding: 8px 16px; font-size: 12px;">Update Week ${week}</button>
+                            <button class="btn week-update-btn" data-week="${week}" style="padding: 8px 16px; font-size: 12px;">Update ${classDisplayName} Week ${week}</button>
                         </div>
                     </div>
                 `;
