@@ -490,16 +490,22 @@
                 // Build new class section
                 let newClassSection = '';
                 for (let week = 1; week <= 16; week++) {
-                    newClassSection += `                // Week ${week}\\n`;
+                    newClassSection += `                // Week ${week}\n`;
                     const lecture1Key = `week${week}-lecture1`;
                     const lecture2Key = `week${week}-lecture2`;
                     
                     const lecture1Url = newLinks[lecture1Key] || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
                     const lecture2Url = newLinks[lecture2Key] || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
                     
-                    newClassSection += `                '${lecture1Key}': '${lecture1Url}',\\n`;
-                    newClassSection += `                '${lecture2Key}': '${lecture2Url}',\\n\\n`;
+                    newClassSection += `                '${lecture1Key}': '${lecture1Url}',\n`;
+                    newClassSection += `                '${lecture2Key}': '${lecture2Url}',\n`;
+                    
+                    if (week < 16) {
+                        newClassSection += `\n`;
+                    }
                 }
+                
+                console.log('Generated new class section preview:', newClassSection.substring(0, 200) + '...');
                 
                 // Replace the class section in the content
                 const classPattern = new RegExp(`(\\s*'${currentClass}':\\s*\\{)[^}]+(\\s*\\})`);
@@ -512,7 +518,7 @@
                     throw new Error(`Could not find class '${currentClass}' in index.html. Please check the file structure.`);
                 }
                 
-                const updatedContent = currentContent.replace(classPattern, `$1\\n${newClassSection}            $2`);
+                const updatedContent = currentContent.replace(classPattern, `$1\n${newClassSection}            $2`);
                 console.log('Content updated, new length:', updatedContent.length);
                 
                 // Update file
