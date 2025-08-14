@@ -39,67 +39,323 @@
             background: rgba(255, 0, 0, 0.1);
             color: #ff6b6b;
         }
+        .class-info {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="container" id="status">
         <div class="spinner"></div>
+        <div class="class-info" id="classInfo"></div>
         <h2>Redirecting to lecture...</h2>
         <p>Please wait while we redirect you to the YouTube video.</p>
     </div>
 
     <script>
-        // Lecture links database - update these URLs after each lecture
+        // Lecture links database - organized by class
         const lectureLinks = {
-            // Week 1
-            'week1-lecture1': 'https://www.youtube.com/watch?v=8QLss7lm5VA', // Replace with actual YouTube URL
-            'week1-lecture2': 'https://youtu.be/aNC9bIkEKyI?feature=shared', // Replace with actual YouTube URL
+            'avc185': {
+                // Week 1
+                'week1-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week1-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 2
+                'week2-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week2-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 3
+                'week3-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week3-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 4
+                'week4-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week4-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 5
+                'week5-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week5-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 6
+                'week6-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week6-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 7
+                'week7-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week7-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 8
+                'week8-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week8-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 9
+                'week9-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week9-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 10
+                'week10-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week10-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 11
+                'week11-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week11-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 12
+                'week12-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week12-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 13
+                'week13-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week13-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 14
+                'week14-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week14-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 15
+                'week15-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week15-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 16
+                'week16-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week16-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+            },
             
-            // Week 2
-            'week2-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
-            'week2-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            'avc200': {
+                // Week 1
+                'week1-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week1-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 2
+                'week2-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week2-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 3
+                'week3-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week3-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 4
+                'week4-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week4-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 5
+                'week5-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week5-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 6
+                'week6-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week6-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 7
+                'week7-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week7-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 8
+                'week8-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week8-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 9
+                'week9-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week9-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 10
+                'week10-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week10-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 11
+                'week11-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week11-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 12
+                'week12-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week12-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 13
+                'week13-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week13-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 14
+                'week14-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week14-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 15
+                'week15-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week15-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 16
+                'week16-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week16-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+            },
             
-            // Week 3
-            'week3-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
-            'week3-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            'avc240': {
+                // Week 1
+                'week1-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week1-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 2
+                'week2-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week2-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 3
+                'week3-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week3-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 4
+                'week4-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week4-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 5
+                'week5-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week5-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 6
+                'week6-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week6-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 7
+                'week7-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week7-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 8
+                'week8-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week8-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 9
+                'week9-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week9-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 10
+                'week10-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week10-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 11
+                'week11-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week11-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 12
+                'week12-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week12-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 13
+                'week13-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week13-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 14
+                'week14-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week14-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 15
+                'week15-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week15-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 16
+                'week16-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week16-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+            },
             
-            // Week 4
-            'week4-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
-            'week4-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
-            
-            // Week 5
-            'week5-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
-            'week5-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
-            
-            // Week 6
-            'week6-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
-            'week6-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
-            
-            // Week 7
-            'week7-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
-            'week7-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
-            
-            // Week 8
-            'week8-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
-            'week8-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
-            
-            // Continue adding weeks as needed...
+            'avc285': {
+                // Week 1
+                'week1-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week1-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 2
+                'week2-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week2-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 3
+                'week3-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week3-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 4
+                'week4-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week4-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 5
+                'week5-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week5-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 6
+                'week6-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week6-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 7
+                'week7-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week7-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 8
+                'week8-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week8-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 9
+                'week9-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week9-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 10
+                'week10-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week10-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 11
+                'week11-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week11-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 12
+                'week12-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week12-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 13
+                'week13-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week13-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 14
+                'week14-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week14-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 15
+                'week15-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week15-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                
+                // Week 16
+                'week16-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'week16-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+            }
+        };
+
+        // Class name mapping for display
+        const classNames = {
+            'avc185': 'AVC 185',
+            'avc200': 'AVC 200',
+            'avc240': 'AVC 240',
+            'avc285': 'AVC 285'
         };
 
         function redirectToLecture() {
-            // Get the lecture parameter from URL
+            // Get the class and lecture parameters from URL
             const urlParams = new URLSearchParams(window.location.search);
+            const classKey = urlParams.get('class');
             const lectureKey = urlParams.get('lecture');
             
-            if (!lectureKey) {
-                showError('No lecture specified. Please use a proper link from Canvas.');
+            // Show class info
+            const classInfo = document.getElementById('classInfo');
+            if (classKey && classNames[classKey]) {
+                classInfo.textContent = `${classNames[classKey]}`;
+            }
+            
+            if (!classKey || !lectureKey) {
+                showError('Missing class or lecture parameter. Please use a proper link from Canvas.');
                 return;
             }
             
-            const lectureURL = lectureLinks[lectureKey];
+            if (!lectureLinks[classKey]) {
+                showError(`Class "${classKey}" not found. Please contact your instructor.`);
+                return;
+            }
+            
+            const lectureURL = lectureLinks[classKey][lectureKey];
             
             if (!lectureURL) {
-                showError(`Lecture "${lectureKey}" not found. Please contact your instructor.`);
+                showError(`Lecture "${lectureKey}" not found for ${classNames[classKey] || classKey}. Please contact your instructor.`);
                 return;
             }
             
