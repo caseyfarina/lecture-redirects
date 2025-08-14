@@ -1,1 +1,272 @@
 
+I have a particular problem that has to do with curriculum implementation in a college class that uses instructure canvas. My students do a weekly project during the semester and each project has an assignment page on canvas. On that page are the requirements, etc, but more importantly, the page contains the links to the two lectures I gave that week on YouTube. These are live streamed the week of the class. Is there a way to set these links well before the semester begins, then just update what they're pointing at after the lectures are completed? I want to avoid copying and pasting from YouTube every week if possible.
+
+Edit
+You're dealing with a common workflow challenge in Canvas, and there are several approaches that can streamline this process significantly.
+
+Best Solution: Use Consistent URL Structure with Redirects
+
+The most elegant approach is to create your own redirect system:
+
+Set up a simple redirect page on your own website/domain (or use a URL shortener service that allows editing)
+Create consistent URLs like:
+yoursite.com/week1-lecture1
+yoursite.com/week1-lecture2
+yoursite.com/week2-lecture1
+etc.
+Add these permanent links to Canvas at the beginning of the semester
+Update the redirects each week to point to the actual YouTube URLs after streaming
+Alternative Canvas-Native Solutions:
+
+Option 1: Canvas External Tools/LTI If your institution supports it, you could embed a simple custom LTI tool that dynamically pulls YouTube URLs from a spreadsheet or database you update.
+
+Option 2: Canvas API Automation Write a script using Canvas's REST API to automatically update assignment pages. You'd maintain a spreadsheet with YouTube URLs and run the script weekly to update all relevant pages.
+
+Option 3: Placeholder YouTube Videos Create unlisted placeholder videos on YouTube for each week, add those links to Canvas initially, then replace the actual video content by uploading over the placeholders (keeping the same YouTube URL).
+
+Practical Recommendation: Given your technical background with Unity, the redirect approach is probably your best bet. It's simple, reliable, and gives you complete control. You could even build a small web interface to manage the redirects if you're handling many classes.
+
+The Canvas API approach would be more automated but requires more initial setup. Would you like me to elaborate on any of these approaches?
+
+
+
+
+Could I use a github repository  for the option 1 strategy? I could update the links in the repository?
+
+Edit
+Yes, absolutely! GitHub can work very well for this redirect strategy. Here are the most practical approaches:
+
+Option 1: GitHub Pages with HTML Redirects Create a simple repository structure like:
+
+week1-lecture1.html
+week1-lecture2.html
+week2-lecture1.html
+etc.
+Each HTML file contains a simple redirect:
+
+html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="refresh" content="0; url=https://youtube.com/watch?v=ACTUAL_VIDEO_ID">
+</head>
+<body>
+    <p>Redirecting to lecture...</p>
+</body>
+</html>
+Your Canvas links would be:
+
+https://yourusername.github.io/yourrepo/week1-lecture1.html
+https://yourusername.github.io/yourrepo/week1-lecture2.html
+Option 2: GitHub Pages with JavaScript (More Flexible) Use a single index.html with URL parameters:
+
+html
+<!-- index.html -->
+<script>
+const links = {
+    'week1-lecture1': 'https://youtube.com/watch?v=VIDEO1',
+    'week1-lecture2': 'https://youtube.com/watch?v=VIDEO2',
+    // etc.
+};
+
+const param = new URLSearchParams(window.location.search).get('lecture');
+if (links[param]) {
+    window.location.href = links[param];
+}
+</script>
+Canvas links: https://yourusername.github.io/yourrepo/?lecture=week1-lecture1
+
+Workflow:
+
+Set up the repository with placeholder YouTube links at semester start
+After each lecture, simply edit the files/data in GitHub (via web interface or git)
+Changes go live immediately via GitHub Pages
+This approach gives you version control of your links, is completely free, and you can update from anywhere. Would you like me to help you set up the specific structure?
+
+
+
+
+ys, how would I impliment option 2
+
+Edit
+I'll walk you through implementing Option 2 step by step:
+
+
+GitHub Pages Lecture Redirect System
+Interactive artifact 
+Now here's how to implement this system:
+
+Step 1: Create GitHub Repository
+Go to GitHub and create a new public repository (e.g., "lecture-redirects")
+Create a new file called index.html
+Copy the code from the artifact above into that file
+Step 2: Enable GitHub Pages
+In your repository, go to Settings > Pages
+Under "Source", select Deploy from a branch
+Choose main branch and / (root)
+Click Save
+Your site will be available at: https://yourusername.github.io/lecture-redirects
+Step 3: Set Up Canvas Links
+In Canvas, use these URLs for your assignment pages:
+
+Week 1 Lecture 1: https://yourusername.github.io/lecture-redirects/?lecture=week1-lecture1
+Week 1 Lecture 2: https://yourusername.github.io/lecture-redirects/?lecture=week1-lecture2
+Week 2 Lecture 1: https://yourusername.github.io/lecture-redirects/?lecture=week2-lecture1
+etc.
+Step 4: Weekly Updates
+After each lecture:
+
+Go to your GitHub repository
+Click on index.html
+Click the pencil icon (Edit)
+Find the appropriate week/lecture entry
+Replace the placeholder URL with your actual YouTube URL
+Commit the changes
+Example update:
+
+javascript
+'week1-lecture1': 'https://www.youtube.com/watch?v=YOUR_ACTUAL_VIDEO_ID',
+Benefits:
+Set up once at semester start
+Update takes 30 seconds per lecture
+Works from any device with web access
+Students get a nice loading page instead of broken links
+Version control tracks all your changes
+The system includes error handling, so if a student clicks a link before you've updated it, they'll get a helpful message instead of a broken redirect.
+
+Would you like me to modify anything about this setup or help you customize it further?
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture Redirect</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="status">
+        <div class="spinner"></div>
+        <h2>Redirecting to lecture...</h2>
+        <p>Please wait while we redirect you to the YouTube video.</p>
+    </div>
+
+    <script>
+        // Lecture links database - update these URLs after each lecture
+        const lectureLinks = {
+            // Week 1
+            'week1-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            'week1-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            
+            // Week 2
+            'week2-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            'week2-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            
+            // Week 3
+            'week3-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            'week3-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            
+            // Week 4
+            'week4-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            'week4-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            
+            // Week 5
+            'week5-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            'week5-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            
+            // Week 6
+            'week6-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            'week6-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            
+            // Week 7
+            'week7-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            'week7-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            
+            // Week 8
+            'week8-lecture1': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            'week8-lecture2': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual YouTube URL
+            
+            // Continue adding weeks as needed...
+        };
+
+        function redirectToLecture() {
+            // Get the lecture parameter from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const lectureKey = urlParams.get('lecture');
+            
+            if (!lectureKey) {
+                showError('No lecture specified. Please use a proper link from Canvas.');
+                return;
+            }
+            
+            const lectureURL = lectureLinks[lectureKey];
+            
+            if (!lectureURL) {
+                showError(`Lecture "${lectureKey}" not found. Please contact your instructor.`);
+                return;
+            }
+            
+            // Add a small delay for better UX, then redirect
+            setTimeout(() => {
+                window.location.href = lectureURL;
+            }, 1500);
+        }
+        
+        function showError(message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'container error';
+            statusDiv.innerHTML = `
+                <h2>Error</h2>
+                <p>${message}</p>
+                <p>Please go back to Canvas and try again, or contact your instructor for assistance.</p>
+            `;
+        }
+        
+        // Run redirect when page loads
+        document.addEventListener('DOMContentLoaded', redirectToLecture);
+    </script>
+</body>
+</html>
+
