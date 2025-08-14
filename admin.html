@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lecture Links Admin</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
@@ -12,86 +14,186 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #14141C;
+            color: #ffffff;
             min-height: 100vh;
             padding: 20px;
+            line-height: 1.6;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(245, 192, 192, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(164, 119, 178, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(245, 192, 192, 0.1) 0%, transparent 50%);
+            background-attachment: fixed;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
             overflow: hidden;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
         }
         
         .header {
-            background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
+            background: linear-gradient(135deg, 
+                rgba(245, 192, 192, 0.2) 0%, 
+                rgba(164, 119, 178, 0.2) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
-            padding: 30px;
+            padding: 40px;
             text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #F5C0C0, #A477B2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1rem;
+            font-weight: 400;
         }
         
         .section {
-            padding: 30px;
-            border-bottom: 1px solid #e9ecef;
+            padding: 32px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            position: relative;
         }
         
         .section h3 {
-            color: #333;
-            margin-bottom: 20px;
+            color: #ffffff;
+            margin-bottom: 24px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .section h3::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, #F5C0C0, #A477B2);
+            border-radius: 2px;
         }
         
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: 500;
-            color: #555;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
-        .form-group input {
+        .form-group input, .form-group select {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
             font-size: 14px;
+            color: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.3s ease;
         }
         
-        .form-group input:focus {
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .form-group input:focus, .form-group select:focus {
             outline: none;
-            border-color: #4facfe;
-            box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.2);
+            border-color: #F5C0C0;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(245, 192, 192, 0.1);
         }
         
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, 
+                rgba(245, 192, 192, 0.8) 0%, 
+                rgba(164, 119, 178, 0.8) 100%);
+            color: #14141C;
             border: none;
-            padding: 12px 24px;
+            padding: 14px 28px;
             font-size: 14px;
             font-weight: 600;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.2), 
+                transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
         }
         
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(245, 192, 192, 0.3);
+            background: linear-gradient(135deg, 
+                rgba(245, 192, 192, 1) 0%, 
+                rgba(164, 119, 178, 1) 100%);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
         
         .current-class {
             text-align: center;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
             margin: 20px 0;
+        }
+        
+        .current-class code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: #F5C0C0;
         }
         
         .weeks-container {
@@ -104,71 +206,165 @@
         
         .weeks-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
         }
         
         .week-card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            border: 1px solid #e9ecef;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .week-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #F5C0C0, #A477B2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .week-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(245, 192, 192, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .week-card:hover::before {
+            opacity: 1;
         }
         
         .week-card h4 {
-            color: #333;
-            margin-bottom: 15px;
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
         }
         
         .controls {
             text-align: center;
-            padding: 20px 0;
-        }
-        
-        .btn {
-            margin: 0 10px;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 32px 0;
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
         
         .status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
+            margin-top: 24px;
+            padding: 16px 20px;
+            border-radius: 12px;
             text-align: center;
             font-weight: 500;
             display: none;
+            border: 1px solid transparent;
         }
         
         .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+            border-color: rgba(34, 197, 94, 0.2);
             display: block;
         }
         
         .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.2);
             display: block;
         }
         
         .status.loading {
-            background: #cce7ff;
-            color: #004085;
-            border: 1px solid #b3d7ff;
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+            border-color: rgba(59, 130, 246, 0.2);
             display: block;
         }
         
         .help-text {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 6px;
+            font-family: 'JetBrains Mono', monospace;
         }
         
         .hidden {
             display: none !important;
+        }
+        
+        /* Checkbox styling */
+        input[type="checkbox"] {
+            width: auto !important;
+            margin-right: 8px;
+            accent-color: #F5C0C0;
+        }
+        
+        /* Select dropdown styling */
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23F5C0C0' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+            padding-right: 40px;
+            appearance: none;
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(245, 192, 192, 0.3);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(245, 192, 192, 0.5);
+        }
+        
+        /* Animation for fade-ins */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .weeks-container.active {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .header, .section {
+                padding: 24px;
+            }
+            
+            .weeks-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
         }
     </style>
 </head>
