@@ -522,8 +522,10 @@
             // Generate week forms if not already generated
             generateWeekForms();
             
-            // Auto-load current links from repository
-            autoLoadCurrentLinks();
+            // Auto-load current links from repository (delay to ensure forms are rendered)
+            setTimeout(() => {
+                autoLoadCurrentLinks();
+            }, 200);
             
             showStatus(`Selected ${CLASSES[classKey]} - Loading current links...`, 'loading');
         }
@@ -568,18 +570,22 @@
                 
                 if (classMatch) {
                     const classContent = classMatch[1];
-                    const linkRegex = /'(week\\d+-lecture\\d+)':\\s*'([^']+)'/g;
+                    console.log('Found class content:', classContent.substring(0, 200) + '...');
+                    const linkRegex = /'(week\d+-lecture\d+)':\s*'([^']+)'/g;
                     let match;
                     
                     while ((match = linkRegex.exec(classContent)) !== null) {
                         const [, key, url] = match;
                         const input = document.getElementById(key);
+                        console.log(`Found match - Key: ${key}, URL: ${url}, Input exists: ${!!input}`);
                         
-                        if (input && url !== 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' && 
-                            url !== 'https://caseyfarina.github.io/lecture-redirects/not-found.html') {
+                        if (input) {
+                            // Load all URLs, not just non-defaults
                             input.value = url;
                             loadedCount++;
-                            console.log(`Loaded ${key}: ${url}`);
+                            console.log(`Set ${key} = ${url}`);
+                        } else {
+                            console.warn(`Input field not found for: ${key}`);
                         }
                     }
                 }
