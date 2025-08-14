@@ -69,15 +69,7 @@
             box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.2);
         }
         
-        .class-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        
-        .class-btn, .btn {
+        .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
@@ -89,14 +81,9 @@
             transition: all 0.3s ease;
         }
         
-        .class-btn:hover, .btn:hover {
+        .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        .class-btn.active {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
         }
         
         .current-class {
@@ -217,16 +204,20 @@
         
         <div class="section">
             <h3>Select Class to Manage:</h3>
-            <div class="class-buttons">
-                <button class="class-btn" data-class="avc185">AVC 185</button>
-                <button class="class-btn" data-class="avc200">AVC 200</button>
-                <button class="class-btn" data-class="avc240">AVC 240</button>
-                <button class="class-btn" data-class="avc285">AVC 285</button>
+            <div class="form-group">
+                <label for="classSelect">Class:</label>
+                <select id="classSelect" style="width: 200px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px;">
+                    <option value="">Choose a class...</option>
+                    <option value="avc185" selected>AVC 185</option>
+                    <option value="avc200">AVC 200</option>
+                    <option value="avc240">AVC 240</option>
+                    <option value="avc285">AVC 285</option>
+                </select>
             </div>
             
-            <div class="current-class" id="currentClassInfo" style="display: none;">
-                <p><strong id="currentClassName">No class selected</strong></p>
-                <p>Canvas URL format: <code id="urlExample">Select a class to see URL format</code></p>
+            <div class="current-class" id="currentClassInfo">
+                <p><strong id="currentClassName">AVC 185</strong></p>
+                <p>Canvas URL format: <code id="urlExample">https://caseyfarina.github.io/lecture-redirects/?class=avc185&lecture=week1-lecture1</code></p>
             </div>
         </div>
         
@@ -238,9 +229,8 @@
                 </div>
                 
                 <div class="controls">
-                    <button class="btn" id="testBtn">Test Button</button>
-                    <button class="btn" id="loadCurrentLinks">Load Current Links</button>
                     <button class="btn" id="updateLinks">Update Repository</button>
+                    <button class="btn" id="testBtn" style="margin-left: 20px; background: #666;">Test Button</button>
                 </div>
                 
                 <div class="status" id="status"></div>
@@ -283,11 +273,14 @@
             console.log('selectClass called with:', classKey);
             currentClass = classKey;
             
-            // Update button states
-            document.querySelectorAll('.class-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.querySelector(`[data-class="${classKey}"]`).classList.add('active');
+            if (!classKey) {
+                // Hide everything if no class selected
+                document.getElementById('weeksContainer').classList.remove('active');
+                return;
+            }
+            
+            // Update dropdown
+            document.getElementById('classSelect').value = classKey;
             
             // Show class info
             const classInfo = document.getElementById('currentClassInfo');
@@ -296,7 +289,7 @@
             
             className.textContent = CLASSES[classKey];
             
-            const owner = document.getElementById('repoOwner').value || 'yourusername';
+            const owner = document.getElementById('repoOwner').value || 'caseyfarina';
             const repo = document.getElementById('repoName').value || 'lecture-redirects';
             urlExample.textContent = `https://${owner}.github.io/${repo}/?class=${classKey}&lecture=week1-lecture1`;
             
@@ -308,7 +301,67 @@
             // Generate week forms if not already generated
             generateWeekForms();
             
-            showStatus(`Selected ${CLASSES[classKey]}`, 'success');
+            // Auto-load current links from repository
+            autoLoadCurrentLinks();
+            
+            showStatus(`Selected ${CLASSES[classKey]} - Loading current links...`, 'loading');
+        }
+        
+        // Auto-load current links (simplified version without user prompts)
+        async function autoLoadCurrentLinks() {
+            const token = document.getElementById('githubToken').value;
+            const owner = document.getElementById('repoOwner').value;
+            const repo = document.getElementById('repoName').value;
+            
+            // Skip if credentials not available
+            if (!token || !owner || !repo || !currentClass) {
+                showStatus(`Selected ${CLASSES[currentClass]} - Enter credentials to load current links`, 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`GitHub API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const content = atob(data.content);
+                
+                // Extract links for current class
+                const classRegex = new RegExp(`'${currentClass}':\\s*\\{([^}]+)\\}`, 's');
+                const classMatch = content.match(classRegex);
+                
+                if (classMatch) {
+                    const classContent = classMatch[1];
+                    const linkRegex = /'(week\\d+-lecture\\d+)':\\s*'([^']+)'/g;
+                    let match;
+                    let loadedCount = 0;
+                    
+                    while ((match = linkRegex.exec(classContent)) !== null) {
+                        const [, key, url] = match;
+                        const input = document.getElementById(key);
+                        
+                        if (input && url !== 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' && 
+                            url !== 'https://caseyfarina.github.io/lecture-redirects/not-found.html') {
+                            input.value = url;
+                            loadedCount++;
+                        }
+                    }
+                }
+                
+                showStatus(`${CLASSES[currentClass]} selected - Current links loaded automatically`, 'success');
+                
+            } catch (error) {
+                console.error('Error auto-loading links:', error);
+                showStatus(`${CLASSES[currentClass]} selected - Could not auto-load links (${error.message})`, 'error');
+            }
         }
         
         // Generate week input forms
@@ -372,69 +425,6 @@
             }
             
             return links;
-        }
-        
-        // Load current links from GitHub
-        async function loadCurrentLinks() {
-            console.log('loadCurrentLinks called');
-            
-            if (!currentClass) {
-                showStatus('Please select a class first', 'error');
-                return;
-            }
-            
-            const token = document.getElementById('githubToken').value;
-            const owner = document.getElementById('repoOwner').value;
-            const repo = document.getElementById('repoName').value;
-            
-            if (!token || !owner || !repo) {
-                showStatus('Please fill in all GitHub authentication fields', 'error');
-                return;
-            }
-            
-            showStatus('Loading current links...', 'loading');
-            
-            try {
-                const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`, {
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                const content = atob(data.content);
-                
-                // Extract links for current class
-                const classRegex = new RegExp(`'${currentClass}':\\s*\\{([^}]+)\\}`, 's');
-                const classMatch = content.match(classRegex);
-                
-                if (classMatch) {
-                    const classContent = classMatch[1];
-                    const linkRegex = /'(week\\d+-lecture\\d+)':\\s*'([^']+)'/g;
-                    let match;
-                    
-                    while ((match = linkRegex.exec(classContent)) !== null) {
-                        const [, key, url] = match;
-                        const input = document.getElementById(key);
-                        
-                        if (input && url !== 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' && 
-                            url !== 'https://caseyfarina.github.io/lecture-redirects/not-found.html') {
-                            input.value = url;
-                        }
-                    }
-                }
-                
-                showStatus('Links loaded successfully!', 'success');
-                
-            } catch (error) {
-                console.error('Error loading links:', error);
-                showStatus(`Error loading links: ${error.message}`, 'error');
-            }
         }
         
         // Update repository
@@ -614,16 +604,15 @@
             // Test button
             document.getElementById('testBtn').addEventListener('click', testFunction);
             
-            // Class buttons
-            document.querySelectorAll('.class-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const classKey = this.getAttribute('data-class');
-                    selectClass(classKey);
-                });
+            // Class dropdown
+            document.getElementById('classSelect').addEventListener('change', function() {
+                const classKey = this.value;
+                selectClass(classKey);
             });
             
-            // Control buttons
-            document.getElementById('loadCurrentLinks').addEventListener('click', loadCurrentLinks);
+            // Auto-select AVC 185 on load if credentials are available
+            const initialClass = 'avc185';
+            selectClass(initialClass);
             
             document.getElementById('updateLinks').addEventListener('click', function(e) {
                 console.log('Update Repository button clicked');
