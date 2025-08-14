@@ -431,10 +431,15 @@
             const enteredPassword = document.getElementById('adminPassword').value;
             const passwordStatus = document.getElementById('passwordStatus');
             
+            console.log('Entered password:', enteredPassword); // Debug
+            console.log('Expected password:', ADMIN_PASSWORD); // Debug
+            
             if (enteredPassword === ADMIN_PASSWORD) {
+                console.log('Password correct, switching interface'); // Debug
                 sessionStorage.setItem('adminAuthenticated', 'true');
                 showMainInterface();
             } else {
+                console.log('Password incorrect'); // Debug
                 passwordStatus.textContent = 'Incorrect password. Please try again.';
                 passwordStatus.className = 'password-status error';
                 passwordStatus.classList.remove('hidden');
@@ -443,8 +448,17 @@
         }
         
         function showMainInterface() {
-            document.getElementById('passwordScreen').classList.add('hidden');
-            document.getElementById('mainInterface').classList.remove('hidden');
+            console.log('Showing main interface'); // Debug
+            const passwordScreen = document.getElementById('passwordScreen');
+            const mainInterface = document.getElementById('mainInterface');
+            
+            if (passwordScreen && mainInterface) {
+                passwordScreen.classList.add('hidden');
+                mainInterface.classList.remove('hidden');
+                console.log('Interface switched successfully'); // Debug
+            } else {
+                console.error('Could not find password screen or main interface elements');
+            }
         }
         
         function logout() {
