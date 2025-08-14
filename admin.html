@@ -105,6 +105,33 @@
             letter-spacing: 0.5px;
         }
         
+        .form-group label.clickable-label {
+            color: #F5C0C0;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .form-group label.clickable-label:hover {
+            color: #A477B2;
+            text-shadow: 0 0 8px rgba(245, 192, 192, 0.5);
+        }
+        
+        .form-group label.clickable-label::after {
+            content: '↗';
+            margin-left: 8px;
+            font-size: 0.75rem;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group label.clickable-label:hover::after {
+            opacity: 1;
+            transform: translateX(2px) translateY(-1px);
+        }
+        
         .form-group input, .form-group select {
             width: 100%;
             padding: 14px 16px;
@@ -625,13 +652,13 @@
                     <div class="week-lectures">
                         <div class="lecture-group">
                             <div class="form-group">
-                                <label for="week${week}-lecture1">Lecture 1:</label>
+                                <label for="week${week}-lecture1" class="clickable-label" data-redirect="week${week}-lecture1" title="Click to test redirect">Lecture 1</label>
                                 <input type="url" id="week${week}-lecture1" placeholder="https://www.youtube.com/watch?v=...">
                             </div>
                         </div>
                         <div class="lecture-group">
                             <div class="form-group">
-                                <label for="week${week}-lecture2">Lecture 2:</label>
+                                <label for="week${week}-lecture2" class="clickable-label" data-redirect="week${week}-lecture2" title="Click to test redirect">Lecture 2</label>
                                 <input type="url" id="week${week}-lecture2" placeholder="https://www.youtube.com/watch?v=...">
                             </div>
                         </div>
@@ -639,7 +666,43 @@
                 `;
                 grid.appendChild(weekCard);
             }
+            
+            // Add click event listeners to all clickable labels
+            addClickableLabelsEventListeners();
+            
             console.log('Week forms generated');
+        }
+        
+        // Add event listeners for clickable labels
+        function addClickableLabelsEventListeners() {
+            document.querySelectorAll('.clickable-label').forEach(label => {
+                label.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const lectureKey = this.dataset.redirect;
+                    
+                    if (!currentClass) {
+                        showStatus('Please select a class first', 'error');
+                        return;
+                    }
+                    
+                    const owner = document.getElementById('repoOwner').value || 'caseyfarina';
+                    const repo = document.getElementById('repoName').value || 'lecture-redirects';
+                    
+                    const redirectUrl = `https://${owner}.github.io/${repo}/?class=${currentClass}&lecture=${lectureKey}`;
+                    
+                    console.log(`Testing redirect: ${redirectUrl}`);
+                    
+                    // Open in new tab for testing
+                    window.open(redirectUrl, '_blank');
+                    
+                    // Also copy to clipboard for easy pasting into Canvas
+                    navigator.clipboard.writeText(redirectUrl).then(() => {
+                        showStatus(`Redirect URL copied to clipboard: ${redirectUrl}`, 'success');
+                    }).catch(() => {
+                        showStatus(`Redirect URL: ${redirectUrl}`, 'success');
+                    });
+                });
+            });
         }
         
         // Normalize YouTube URLs
