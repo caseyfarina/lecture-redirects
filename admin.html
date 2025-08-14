@@ -416,7 +416,8 @@
                         const [, key, url] = match;
                         const input = document.getElementById(key);
                         
-                        if (input && url !== 'https://www.youtube.com/watch?v=dQw4w9WgXcQ') {
+                        if (input && url !== 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' && 
+                            url !== 'https://caseyfarina.github.io/lecture-redirects/not-found.html') {
                             input.value = url;
                         }
                     }
@@ -494,8 +495,8 @@
                     const lecture1Key = `week${week}-lecture1`;
                     const lecture2Key = `week${week}-lecture2`;
                     
-                    const lecture1Url = newLinks[lecture1Key] || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-                    const lecture2Url = newLinks[lecture2Key] || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+                    const lecture1Url = newLinks[lecture1Key] || 'https://caseyfarina.github.io/lecture-redirects/not-found.html';
+                    const lecture2Url = newLinks[lecture2Key] || 'https://caseyfarina.github.io/lecture-redirects/not-found.html';
                     
                     newClassSection += `                '${lecture1Key}': '${lecture1Url}',\n`;
                     newClassSection += `                '${lecture2Key}': '${lecture2Url}',\n`;
