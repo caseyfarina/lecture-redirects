@@ -272,6 +272,57 @@
             width: 100%;
         }
         
+        .input-with-thumbnail {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .input-container {
+            flex: 1;
+        }
+        
+        .thumbnail-container {
+            width: 60px;
+            height: 45px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .thumbnail-container.empty {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+        
+        .thumbnail-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s ease;
+        }
+        
+        .thumbnail-container.loading {
+            background: rgba(5, 108, 242, 0.1);
+            border-color: rgba(5, 108, 242, 0.3);
+        }
+        
+        .thumbnail-container.loading::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(5, 108, 242, 0.3);
+            border-top: 2px solid #056CF2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
         .week-card::before {
             content: '';
             position: absolute;
@@ -710,6 +761,9 @@
                             input.value = url;
                             loadedCount++;
                             console.log(`Set ${key} = ${url}`);
+                            
+                            // Update thumbnail for this input
+                            updateThumbnail(key, url);
                         } else {
                             console.warn(`Input field not found for: ${key}`);
                         }
@@ -738,13 +792,23 @@
                         <div class="lecture-group">
                             <div class="form-group">
                                 <label for="week${week}-lecture1" class="clickable-label" data-redirect="week${week}-lecture1" title="Click to test redirect">Lecture 1</label>
-                                <input type="url" id="week${week}-lecture1" placeholder="https://www.youtube.com/watch?v=...">
+                                <div class="input-with-thumbnail">
+                                    <div class="input-container">
+                                        <input type="url" id="week${week}-lecture1" placeholder="https://www.youtube.com/watch?v=...">
+                                    </div>
+                                    <div class="thumbnail-container empty" id="week${week}-lecture1-thumbnail"></div>
+                                </div>
                             </div>
                         </div>
                         <div class="lecture-group">
                             <div class="form-group">
                                 <label for="week${week}-lecture2" class="clickable-label" data-redirect="week${week}-lecture2" title="Click to test redirect">Lecture 2</label>
-                                <input type="url" id="week${week}-lecture2" placeholder="https://www.youtube.com/watch?v=...">
+                                <div class="input-with-thumbnail">
+                                    <div class="input-container">
+                                        <input type="url" id="week${week}-lecture2" placeholder="https://www.youtube.com/watch?v=...">
+                                    </div>
+                                    <div class="thumbnail-container empty" id="week${week}-lecture2-thumbnail"></div>
+                                </div>
                             </div>
                         </div>
                         <div class="week-update-controls" style="margin-top: 10px; text-align: center;">
@@ -760,6 +824,9 @@
             
             // Add event listeners to week update buttons
             addWeekUpdateButtonListeners();
+            
+            // Add event listeners for thumbnail updates
+            addThumbnailUpdateListeners();
             
             console.log('Week forms generated');
         }
@@ -895,6 +962,35 @@
             }
         }
         
+        // Add event listeners for thumbnail updates
+        function addThumbnailUpdateListeners() {
+            // Add listeners to all URL inputs
+            for (let week = 1; week <= 16; week++) {
+                const lecture1Input = document.getElementById(`week${week}-lecture1`);
+                const lecture2Input = document.getElementById(`week${week}-lecture2`);
+                
+                if (lecture1Input) {
+                    lecture1Input.addEventListener('input', function() {
+                        updateThumbnail(`week${week}-lecture1`, this.value);
+                    });
+                    
+                    lecture1Input.addEventListener('blur', function() {
+                        updateThumbnail(`week${week}-lecture1`, this.value);
+                    });
+                }
+                
+                if (lecture2Input) {
+                    lecture2Input.addEventListener('input', function() {
+                        updateThumbnail(`week${week}-lecture2`, this.value);
+                    });
+                    
+                    lecture2Input.addEventListener('blur', function() {
+                        updateThumbnail(`week${week}-lecture2`, this.value);
+                    });
+                }
+            }
+        }
+        
         // Add event listeners for clickable labels
         function addClickableLabelsEventListeners() {
             document.querySelectorAll('.clickable-label').forEach(label => {
@@ -927,21 +1023,84 @@
             });
         }
         
-        // Normalize YouTube URLs
-        function normalizeYouTubeUrl(url) {
-            if (!url || url.trim() === '') return '';
+        // Extract YouTube video ID from URL
+        function extractYouTubeVideoId(url) {
+            if (!url || url.trim() === '') return null;
             
             const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
             if (shortMatch) {
-                return `https://www.youtube.com/watch?v=${shortMatch[1]}`;
+                return shortMatch[1];
             }
             
             const longMatch = url.match(/youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]+)/);
             if (longMatch) {
-                return `https://www.youtube.com/watch?v=${longMatch[1]}`;
+                return longMatch[1];
+            }
+            
+            return null;
+        }
+        
+        // Get YouTube thumbnail URL from video ID
+        function getYouTubeThumbnailUrl(videoId) {
+            if (!videoId) return null;
+            // Use medium quality thumbnail (320x180)
+            return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+        }
+        
+        // Normalize YouTube URLs
+        function normalizeYouTubeUrl(url) {
+            if (!url || url.trim() === '') return '';
+            
+            const videoId = extractYouTubeVideoId(url);
+            if (videoId) {
+                return `https://www.youtube.com/watch?v=${videoId}`;
             }
             
             return url;
+        }
+        
+        // Update thumbnail for a specific input
+        function updateThumbnail(inputId, url) {
+            const thumbnailContainer = document.getElementById(`${inputId}-thumbnail`);
+            if (!thumbnailContainer) return;
+            
+            // Clear existing content
+            thumbnailContainer.innerHTML = '';
+            thumbnailContainer.className = 'thumbnail-container';
+            
+            if (!url || url.trim() === '') {
+                // Show empty state
+                thumbnailContainer.classList.add('empty');
+                return;
+            }
+            
+            const videoId = extractYouTubeVideoId(url);
+            if (!videoId) {
+                // Not a valid YouTube URL
+                thumbnailContainer.classList.add('empty');
+                return;
+            }
+            
+            // Show loading state
+            thumbnailContainer.classList.add('loading');
+            
+            const thumbnailUrl = getYouTubeThumbnailUrl(videoId);
+            const img = new Image();
+            
+            img.onload = function() {
+                thumbnailContainer.classList.remove('loading');
+                thumbnailContainer.innerHTML = '';
+                thumbnailContainer.appendChild(img);
+            };
+            
+            img.onerror = function() {
+                thumbnailContainer.classList.remove('loading');
+                thumbnailContainer.classList.add('empty');
+                thumbnailContainer.innerHTML = '';
+            };
+            
+            img.src = thumbnailUrl;
+            img.alt = 'YouTube thumbnail';
         }
         
         // Collect lecture links
