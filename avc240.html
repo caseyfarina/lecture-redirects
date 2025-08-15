@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVC 240 - Lecture Library</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #000000;
+            color: #F2F2F2;
+            min-height: 100vh;
+            line-height: 1.5;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(5, 108, 242, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(124, 5, 242, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(5, 108, 242, 0.1) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #056CF2, #7C05F2);
+            border-radius: 2px 2px 0 0;
+        }
+        
+        .header h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #056CF2, #7C05F2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+        
+        .class-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, rgba(5, 108, 242, 0.3), rgba(124, 5, 242, 0.3));
+            border: 1px solid rgba(5, 108, 242, 0.4);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #056CF2;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .last-updated {
+            margin-top: 20px;
+            font-size: 0.875rem;
+            opacity: 0.6;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .lectures-grid {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .week-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .week-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #056CF2, #7C05F2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .week-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(5, 108, 242, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .week-card:hover::before {
+            opacity: 1;
+        }
+        
+        .week-card h3 {
+            color: #056CF2;
+            margin-bottom: 16px;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .lecture-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .lecture-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            text-decoration: none;
+            color: #F2F2F2;
+            transition: all 0.3s ease;
+        }
+        
+        .lecture-link:hover {
+            background: rgba(5, 108, 242, 0.1);
+            border-color: rgba(5, 108, 242, 0.3);
+            transform: translateX(4px);
+        }
+        
+        .lecture-thumbnail {
+            width: 60px;
+            height: 45px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .lecture-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .lecture-thumbnail.empty {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+        }
+        
+        .lecture-info {
+            flex: 1;
+        }
+        
+        .lecture-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #F2F2F2;
+        }
+        
+        .lecture-status {
+            font-size: 0.875rem;
+            opacity: 0.7;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .lecture-status.available {
+            color: #4ade80;
+        }
+        
+        .lecture-status.coming-soon {
+            color: #fbbf24;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.6;
+        }
+        
+        .footer p {
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .spinner {
+            border: 3px solid rgba(5, 108, 242, 0.2);
+            border-radius: 50%;
+            border-top: 3px solid #056CF2;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+            
+            .header {
+                padding: 24px 16px;
+                margin-bottom: 24px;
+            }
+            
+            .week-card {
+                padding: 16px;
+            }
+            
+            .lectures-grid {
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AVC 240</h1>
+            <p>Complete Lecture Library</p>
+            <div class="class-badge">AVC 240</div>
+            <div class="last-updated" id="lastUpdated">Loading...</div>
+        </div>
+        
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <p>Loading lecture library...</p>
+        </div>
+        
+        <div class="lectures-grid" id="lecturesGrid" style="display: none;">
+            <!-- Lecture cards will be generated here -->
+        </div>
+        
+        <div class="footer">
+            <p>AVC 240 Lecture Library</p>
+            <p>Updated automatically from course database</p>
+        </div>
+    </div>
+
+    <script>
+        // Extract YouTube video ID from URL
+        function extractYouTubeVideoId(url) {
+            if (!url || url.trim() === '') return null;
+            
+            const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+            if (shortMatch) {
+                return shortMatch[1];
+            }
+            
+            const longMatch = url.match(/youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]+)/);
+            if (longMatch) {
+                return longMatch[1];
+            }
+            
+            return null;
+        }
+        
+        // Get YouTube thumbnail URL from video ID
+        function getYouTubeThumbnailUrl(videoId) {
+            if (!videoId) return null;
+            return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+        }
+        
+        // Load lecture data
+        async function loadLectures() {
+            try {
+                // Fetch the index.html file to get lecture links
+                const response = await fetch('./index.html');
+                const content = await response.text();
+                
+                // Extract AVC 240 links
+                const classRegex = /'avc240':\s*\{([^}]+)\}/s;
+                const classMatch = content.match(classRegex);
+                
+                if (!classMatch) {
+                    throw new Error('Could not find AVC 240 data');
+                }
+                
+                const classContent = classMatch[1];
+                const linkRegex = /'(week\d+)-(lecture\d+)':\s*'([^']+)'/g;
+                const lectures = {};
+                let match;
+                
+                while ((match = linkRegex.exec(classContent)) !== null) {
+                    const [, week, lecture, url] = match;
+                    const weekNum = parseInt(week.replace('week', ''));
+                    const lectureNum = parseInt(lecture.replace('lecture', ''));
+                    
+                    if (!lectures[weekNum]) {
+                        lectures[weekNum] = {};
+                    }
+                    
+                    lectures[weekNum][lectureNum] = url;
+                }
+                
+                displayLectures(lectures);
+                document.getElementById('lastUpdated').textContent = `Last updated: ${new Date().toLocaleDateString()}`;
+                
+            } catch (error) {
+                console.error('Error loading lectures:', error);
+                document.getElementById('loadingIndicator').innerHTML = `
+                    <p style="color: #f87171;">Error loading lecture library</p>
+                    <p style="font-size: 0.875rem; margin-top: 8px;">Please try refreshing the page</p>
+                `;
+            }
+        }
+        
+        // Display lectures in the grid
+        function displayLectures(lectures) {
+            const grid = document.getElementById('lecturesGrid');
+            const loading = document.getElementById('loadingIndicator');
+            
+            grid.innerHTML = '';
+            
+            // Create cards for weeks 1-16
+            for (let week = 1; week <= 16; week++) {
+                const weekCard = document.createElement('div');
+                weekCard.className = 'week-card';
+                
+                const weekLectures = lectures[week] || {};
+                const lecture1Url = weekLectures[1];
+                const lecture2Url = weekLectures[2];
+                
+                weekCard.innerHTML = `
+                    <h3>Week ${week}</h3>
+                    <div class="lecture-links">
+                        ${createLectureLink(week, 1, lecture1Url)}
+                        ${createLectureLink(week, 2, lecture2Url)}
+                    </div>
+                `;
+                
+                grid.appendChild(weekCard);
+            }
+            
+            loading.style.display = 'none';
+            grid.style.display = 'grid';
+        }
+        
+        // Create individual lecture link HTML
+        function createLectureLink(week, lectureNum, url) {
+            const isAvailable = url && !url.includes('not-found.html');
+            const videoId = isAvailable ? extractYouTubeVideoId(url) : null;
+            const thumbnailUrl = videoId ? getYouTubeThumbnailUrl(videoId) : null;
+            const redirectUrl = `https://caseyfarina.github.io/lecture-redirects/?class=avc240&lecture=week${week}-lecture${lectureNum}`;
+            
+            const thumbnailHtml = isAvailable && thumbnailUrl 
+                ? `<img src="${thumbnailUrl}" alt="Lecture ${lectureNum} thumbnail" onerror="this.parentElement.innerHTML='<span>No preview</span>'; this.parentElement.classList.add('empty');">`
+                : '<span>Coming Soon</span>';
+            
+            const statusClass = isAvailable ? 'available' : 'coming-soon';
+            const statusText = isAvailable ? 'Available' : 'Coming Soon';
+            
+            if (isAvailable) {
+                return `
+                    <a href="${redirectUrl}" class="lecture-link" target="_blank">
+                        <div class="lecture-thumbnail ${!thumbnailUrl ? 'empty' : ''}">
+                            ${thumbnailHtml}
+                        </div>
+                        <div class="lecture-info">
+                            <div class="lecture-title">Lecture ${lectureNum}</div>
+                            <div class="lecture-status ${statusClass}">${statusText}</div>
+                        </div>
+                    </a>
+                `;
+            } else {
+                return `
+                    <div class="lecture-link" style="opacity: 0.6; cursor: not-allowed;">
+                        <div class="lecture-thumbnail empty">
+                            ${thumbnailHtml}
+                        </div>
+                        <div class="lecture-info">
+                            <div class="lecture-title">Lecture ${lectureNum}</div>
+                            <div class="lecture-status ${statusClass}">${statusText}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Load lectures when page loads
+        document.addEventListener('DOMContentLoaded', loadLectures);
+    </script>
+</body>
+</html>
