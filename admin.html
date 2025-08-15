@@ -1327,20 +1327,27 @@
                 // Create CSV content
                 let csvContent = 'Class,Week,Lecture,Status,URL,Video ID,Thumbnail URL\n';
                 
-                // Extract links for all classes
+                // Extract links for all classes - ensure we get all data even if regex fails
                 for (const [classKey, className] of Object.entries(CLASSES)) {
-                    const classRegex = new RegExp(`'${classKey}':\\\\s*\\\\{([^}]+)\\\\}`, 's');
+                    console.log(`Processing class: ${classKey}`);
+                    
+                    // Try a simpler regex pattern first
+                    const classRegex = new RegExp(`'${classKey}':\\s*\\{([^}]+)\\}`, 's');
                     const classMatch = content.match(classRegex);
                     
                     if (classMatch) {
                         const classContent = classMatch[1];
-                        const linkRegex = /'(week\\d+)-(lecture\\d+)':\\s*'([^']+)'/g;
+                        console.log(`Found ${classKey} content, length:`, classContent.length);
+                        
+                        const linkRegex = /'(week\d+)-(lecture\d+)':\s*'([^']+)'/g;
                         let match;
+                        let entryCount = 0;
                         
                         while ((match = linkRegex.exec(classContent)) !== null) {
                             const [, week, lecture, url] = match;
                             const weekNum = week.replace('week', '');
                             const lectureNum = lecture.replace('lecture', '');
+                            entryCount++;
                             
                             // Determine status and extract video data
                             const isConfigured = url && !url.includes('not-found.html');
@@ -1348,8 +1355,33 @@
                             const videoId = isConfigured ? extractYouTubeVideoId(url) : '';
                             const thumbnailUrl = videoId ? getYouTubeThumbnailUrl(videoId) : '';
                             
+                            // Use N/A for empty fields for better Google Sheets compatibility
+                            const displayUrl = url || 'N/A';
+                            const displayVideoId = videoId || 'N/A';
+                            const displayThumbnail = thumbnailUrl || 'N/A';
+                            
                             // Include all entries - both configured and not-configured
-                            csvContent += `"${className}","Week ${weekNum}","Lecture ${lectureNum}","${status}","${url}","${videoId || ''}","${thumbnailUrl || ''}"\n`;
+                            csvContent += `"${className}","Week ${weekNum}","Lecture ${lectureNum}","${status}","${displayUrl}","${displayVideoId}","${displayThumbnail}"\n`;
+                        }
+                        
+                        console.log(`Found ${entryCount} entries for ${classKey}`);
+                        
+                        // If no entries found via regex, manually add default entries
+                        if (entryCount === 0) {
+                            console.log(`No regex matches for ${classKey}, adding default entries`);
+                            for (let week = 1; week <= 16; week++) {
+                                for (let lecture = 1; lecture <= 2; lecture++) {
+                                    csvContent += `"${className}","Week ${week}","Lecture ${lecture}","Not Set","N/A","N/A","N/A"\n`;
+                                }
+                            }
+                        }
+                    } else {
+                        console.log(`No content found for ${classKey}, adding default entries`);
+                        // If no class section found, add default entries
+                        for (let week = 1; week <= 16; week++) {
+                            for (let lecture = 1; lecture <= 2; lecture++) {
+                                csvContent += `"${className}","Week ${week}","Lecture ${lecture}","Not Set","N/A","N/A","N/A"\n`;
+                            }
                         }
                     }
                 }
