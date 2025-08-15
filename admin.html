@@ -1325,7 +1325,7 @@
                 const content = atob(data.content);
                 
                 // Create CSV content
-                let csvContent = 'Class,Week,Lecture,URL,Video ID,Thumbnail URL\n';
+                let csvContent = 'Class,Week,Lecture,Status,URL,Video ID,Thumbnail URL\n';
                 
                 // Extract links for all classes
                 for (const [classKey, className] of Object.entries(CLASSES)) {
@@ -1342,14 +1342,14 @@
                             const weekNum = week.replace('week', '');
                             const lectureNum = lecture.replace('lecture', '');
                             
-                            // Extract video ID and create thumbnail URL
-                            const videoId = extractYouTubeVideoId(url);
+                            // Determine status and extract video data
+                            const isConfigured = url && !url.includes('not-found.html');
+                            const status = isConfigured ? 'Configured' : 'Not Set';
+                            const videoId = isConfigured ? extractYouTubeVideoId(url) : '';
                             const thumbnailUrl = videoId ? getYouTubeThumbnailUrl(videoId) : '';
                             
-                            // Only include rows with actual YouTube URLs (not not-found.html)
-                            if (url && !url.includes('not-found.html')) {
-                                csvContent += `"${className}","Week ${weekNum}","Lecture ${lectureNum}","${url}","${videoId || ''}","${thumbnailUrl || ''}"\n`;
-                            }
+                            // Include all entries - both configured and not-configured
+                            csvContent += `"${className}","Week ${weekNum}","Lecture ${lectureNum}","${status}","${url}","${videoId || ''}","${thumbnailUrl || ''}"\n`;
                         }
                     }
                 }
