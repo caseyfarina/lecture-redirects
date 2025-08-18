@@ -1,0 +1,80 @@
+name: YouTube Stream Monitor
+
+on:
+  schedule:
+    # Run every 15 minutes during semester (UTC time)
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allow manual triggers
+
+env:
+  SEMESTER_START: '2025-08-24'  # Semester start date
+  SEMESTER_END: '2025-12-18'    # Semester end date
+
+jobs:
+  monitor-streams:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Check if semester is active
+      id: semester-check
+      run: |
+        current_date=$(date -u +%Y-%m-%d)
+        start_date="${{ env.SEMESTER_START }}"
+        end_date="${{ env.SEMESTER_END }}"
+        
+        if [[ "$current_date" > "$start_date" && "$current_date" < "$end_date" ]]; then
+          echo "active=true" >> $GITHUB_OUTPUT
+          echo "Semester is active: $current_date is between $start_date and $end_date"
+        else
+          echo "active=false" >> $GITHUB_OUTPUT
+          echo "Semester is not active: $current_date is outside $start_date to $end_date"
+        fi
+
+    - name: Monitor YouTube streams
+      if: steps.semester-check.outputs.active == 'true'
+      run: |
+        node .github/scripts/youtube-monitor.js
+      env:
+        YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        EMAIL_USER: ${{ secrets.EMAIL_USER }}
+        EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+        RECIPIENT_EMAILS: "caseyfarina@gmail.com,casey.farina@gccaz.edu"
+
+    - name: Commit changes
+      if: steps.semester-check.outputs.active == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "YouTube Stream Monitor"
+        
+        if [[ -n $(git status --porcelain) ]]; then
+          git add .
+          git commit -m "🤖 Auto-assign YouTube streams - $(date -u +%Y-%m-%d)"
+          git push
+          echo "Changes committed and pushed"
+        else
+          echo "No changes to commit"
+        fi
+
+    - name: Send weekly summary (Fridays only)
+      if: steps.semester-check.outputs.active == 'true' && github.event.schedule == '*/15 * * * *'
+      run: |
+        if [ $(date -u +%u) -eq 5 ]; then
+          echo "Sending weekly summary email..."
+          node .github/scripts/send-weekly-summary.js
+        fi
+      env:
+        EMAIL_USER: ${{ secrets.EMAIL_USER }}
+        EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+        RECIPIENT_EMAILS: "caseyfarina@gmail.com,casey.farina@gccaz.edu"
