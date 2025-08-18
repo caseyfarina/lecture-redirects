@@ -82,7 +82,7 @@ function determineLectureNumber(streamDate, classKey) {
 }
 
 async function getRecentStreams() {
-    const url = `https://www.googleapis.com/youtube/v3/search?key=${CONFIG.YOUTUBE_API_KEY}&channelId=${CONFIG.YOUTUBE_CHANNEL_ID}&part=snippet&order=date&type=video&maxResults=10&publishedAfter=${new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()}`;
+    const url = `https://www.googleapis.com/youtube/v3/search?key=${CONFIG.YOUTUBE_API_KEY}&channelId=${CONFIG.YOUTUBE_CHANNEL_ID}&part=snippet&order=date&type=video&maxResults=10&publishedAfter=${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()}`;
     
     console.log('Fetching recent streams from YouTube...');
     
