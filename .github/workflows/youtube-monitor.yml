@@ -7,7 +7,7 @@ on:
   workflow_dispatch: # Allow manual triggers
 
 env:
-  SEMESTER_START: '2025-08-24'  # Semester start date
+  SEMESTER_START: '2025-08-10'  # Temporary test date (before today)
   SEMESTER_END: '2025-12-18'    # Semester end date
 
 jobs:
