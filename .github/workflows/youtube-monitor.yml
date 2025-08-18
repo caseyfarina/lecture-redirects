@@ -32,7 +32,7 @@ jobs:
         start_date="${{ env.SEMESTER_START }}"
         end_date="${{ env.SEMESTER_END }}"
         
-        if [[ "$current_date" >= "$start_date" && "$current_date" <= "$end_date" ]]; then
+        if [[ "$current_date" > "$start_date" || "$current_date" == "$start_date" ]] && [[ "$current_date" < "$end_date" || "$current_date" == "$end_date" ]]; then
           echo "active=true" >> $GITHUB_OUTPUT
           echo "Semester is active: $current_date is between $start_date and $end_date"
         else
