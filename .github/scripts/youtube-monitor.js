@@ -4,7 +4,7 @@ const https = require('https');
 
 // Configuration
 const CONFIG = {
-    SEMESTER_START: process.env.SEMESTER_START || '2025-08-25',
+    SEMESTER_START: process.env.SEMESTER_START || '2025-08-24',
     SEMESTER_END: process.env.SEMESTER_END || '2025-12-15',
     YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY,
     YOUTUBE_CHANNEL_ID: process.env.YOUTUBE_CHANNEL_ID,
@@ -71,7 +71,13 @@ function calculateWeekNumber(streamDate, semesterStart) {
     return Math.floor(diffDays / 7) + 1;
 }
 
-function determineLectureNumber(streamDate, classKey) {
+function determineLectureNumber(streamDate, classKey, week, indexContent) {
+    // Special handling for AVC 285 - sequential assignment regardless of day
+    if (classKey === 'avc285') {
+        return getNextAvailableLecture(classKey, week, indexContent);
+    }
+    
+    // Regular day-based assignment for other classes
     const dayOfWeek = streamDate.getDay() === 0 ? 7 : streamDate.getDay(); // Convert Sunday from 0 to 7
     const schedule = CONFIG.CLASS_SCHEDULE[classKey];
     
@@ -79,6 +85,23 @@ function determineLectureNumber(streamDate, classKey) {
     
     const lectureIndex = schedule.indexOf(dayOfWeek);
     return lectureIndex >= 0 ? lectureIndex + 1 : 1;
+}
+
+function getNextAvailableLecture(classKey, week, indexContent) {
+    // Check which lecture slots are already filled for AVC 285 in this week
+    for (let lectureNum = 1; lectureNum <= 2; lectureNum++) {
+        const lectureKey = `week${week}-lecture${lectureNum}`;
+        const existingPattern = new RegExp(`'${classKey}':\\s*\\{[\\s\\S]*?'${lectureKey}':\\s*'([^']+)'`);
+        const existingMatch = indexContent.match(existingPattern);
+        
+        // If slot is empty or has placeholder, use this slot
+        if (!existingMatch || existingMatch[1].includes('not-found.html')) {
+            return lectureNum;
+        }
+    }
+    
+    // If both slots are filled, default to lecture 1 (shouldn't happen normally)
+    return 1;
 }
 
 async function getRecentStreams() {
@@ -107,11 +130,17 @@ function getCurrentIndexContent() {
 
 function updateIndexContent(content, classKey, week, lecture, videoUrl) {
     const lectureKey = `week${week}-lecture${lecture}`;
-    const pattern = new RegExp(`('${lectureKey}':\\s*')[^']+(')`);
+    
+    // Create a class-specific pattern that looks for the lecture within the correct class section
+    // This finds the class section and then the specific lecture within it
+    const classPattern = new RegExp(`('${classKey}':\\s*\\{[\\s\\S]*?)'${lectureKey}':\\s*'[^']+'`, 'g');
     
     console.log(`Updating ${classKey} ${lectureKey} with ${videoUrl}`);
     
-    return content.replace(pattern, `$1${videoUrl}$2`);
+    // Replace the lecture URL within the specific class section
+    return content.replace(classPattern, (match) => {
+        return match.replace(new RegExp(`'${lectureKey}':\\s*'[^']+'`), `'${lectureKey}': '${videoUrl}'`);
+    });
 }
 
 function writeIndexContent(content) {
@@ -171,11 +200,11 @@ async function main() {
             
             // Calculate week and lecture numbers
             const week = calculateWeekNumber(streamDate, CONFIG.SEMESTER_START);
-            const lecture = determineLectureNumber(streamDate, classKey);
+            const lecture = determineLectureNumber(streamDate, classKey, week, indexContent);
             
-            // Check if this lecture slot is already filled
+            // Check if this lecture slot is already filled (within the specific class section)
             const lectureKey = `week${week}-lecture${lecture}`;
-            const existingPattern = new RegExp(`'${lectureKey}':\\s*'([^']+)'`);
+            const existingPattern = new RegExp(`'${classKey}':\\s*\\{[\\s\\S]*?'${lectureKey}':\\s*'([^']+)'`);
             const existingMatch = indexContent.match(existingPattern);
             
             if (existingMatch && !existingMatch[1].includes('not-found.html')) {
