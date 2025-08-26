@@ -105,20 +105,66 @@ function getNextAvailableLecture(classKey, week, indexContent) {
 }
 
 async function getRecentStreams() {
-    const url = `https://www.googleapis.com/youtube/v3/search?key=${CONFIG.YOUTUBE_API_KEY}&channelId=${CONFIG.YOUTUBE_CHANNEL_ID}&part=snippet&order=date&type=video&maxResults=10&publishedAfter=${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()}`;
+    // Search for videos from last 7 days (covers live streams and regular uploads)
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?key=${CONFIG.YOUTUBE_API_KEY}&channelId=${CONFIG.YOUTUBE_CHANNEL_ID}&part=snippet&order=date&type=video&maxResults=50&publishedAfter=${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()}`;
     
-    console.log('Fetching recent streams from YouTube...');
+    console.log('Fetching recent videos from YouTube...');
     
     try {
-        const response = await makeHttpsRequest(url);
+        const response = await makeHttpsRequest(searchUrl);
         
         if (response.error) {
             throw new Error(`YouTube API Error: ${response.error.message}`);
         }
         
-        return response.items || [];
+        let items = response.items || [];
+        console.log(`Found ${items.length} videos from search API`);
+        
+        // For more comprehensive coverage, also check the channel's upload playlist
+        // This helps catch videos that might not appear in search results immediately
+        try {
+            const channelUrl = `https://www.googleapis.com/youtube/v3/channels?key=${CONFIG.YOUTUBE_API_KEY}&id=${CONFIG.YOUTUBE_CHANNEL_ID}&part=contentDetails`;
+            const channelResponse = await makeHttpsRequest(channelUrl);
+            
+            if (channelResponse.items && channelResponse.items[0]) {
+                const uploadsPlaylistId = channelResponse.items[0].contentDetails.relatedPlaylists.uploads;
+                const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?key=${CONFIG.YOUTUBE_API_KEY}&playlistId=${uploadsPlaylistId}&part=snippet&order=date&maxResults=20`;
+                
+                const playlistResponse = await makeHttpsRequest(playlistUrl);
+                const playlistItems = playlistResponse.items || [];
+                
+                console.log(`Found ${playlistItems.length} videos from uploads playlist`);
+                
+                // Filter playlist items to only include recent videos and convert format
+                const recentPlaylistItems = playlistItems
+                    .filter(item => {
+                        const publishedDate = new Date(item.snippet.publishedAt);
+                        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                        return publishedDate > sevenDaysAgo;
+                    })
+                    .map(item => ({
+                        id: { videoId: item.snippet.resourceId.videoId },
+                        snippet: item.snippet
+                    }));
+                
+                // Merge and deduplicate by video ID
+                const allVideoIds = new Set(items.map(item => item.id.videoId));
+                recentPlaylistItems.forEach(item => {
+                    if (!allVideoIds.has(item.id.videoId)) {
+                        items.push(item);
+                        allVideoIds.add(item.id.videoId);
+                    }
+                });
+                
+                console.log(`Total unique videos after merge: ${items.length}`);
+            }
+        } catch (playlistError) {
+            console.log('Could not fetch uploads playlist, using search results only:', playlistError.message);
+        }
+        
+        return items;
     } catch (error) {
-        console.error('Error fetching YouTube streams:', error);
+        console.error('Error fetching YouTube videos:', error);
         throw error;
     }
 }
