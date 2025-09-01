@@ -31,18 +31,56 @@ const CONFIG = {
 // Utility functions
 function makeHttpsRequest(url) {
     return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            reject(new Error('Request timeout after 30 seconds'));
+        }, 30000);
+        
         https.get(url, (res) => {
+            clearTimeout(timeout);
             let data = '';
             res.on('data', (chunk) => data += chunk);
             res.on('end', () => {
                 try {
-                    resolve(JSON.parse(data));
+                    const parsed = JSON.parse(data);
+                    resolve(parsed);
                 } catch (e) {
                     resolve(data);
                 }
             });
-        }).on('error', reject);
+        }).on('error', (error) => {
+            clearTimeout(timeout);
+            reject(error);
+        });
     });
+}
+
+async function makeHttpsRequestWithRetry(url, maxRetries = 3, context = 'API call') {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`🔄 ${context} - Attempt ${attempt}/${maxRetries}`);
+            const result = await makeHttpsRequest(url);
+            
+            // Check for API errors in response
+            if (result && result.error) {
+                throw new Error(`API Error: ${result.error.message || 'Unknown API error'}`);
+            }
+            
+            console.log(`✅ ${context} successful`);
+            return result;
+        } catch (error) {
+            console.warn(`⚠️ ${context} attempt ${attempt} failed:`, error.message);
+            
+            if (attempt === maxRetries) {
+                console.error(`❌ All ${context} attempts failed after ${maxRetries} tries`);
+                throw new Error(`${context} failed: ${error.message}`);
+            }
+            
+            // Exponential backoff: 2s, 4s, 8s
+            const waitTime = Math.pow(2, attempt) * 1000;
+            console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+    }
 }
 
 function parseStreamDate(title) {
@@ -111,11 +149,7 @@ async function getRecentStreams() {
     console.log('Fetching recent videos from YouTube...');
     
     try {
-        const response = await makeHttpsRequest(searchUrl);
-        
-        if (response.error) {
-            throw new Error(`YouTube API Error: ${response.error.message}`);
-        }
+        const response = await makeHttpsRequestWithRetry(searchUrl, 3, 'YouTube Search API');
         
         let items = response.items || [];
         console.log(`Found ${items.length} videos from search API`);
@@ -124,13 +158,13 @@ async function getRecentStreams() {
         // This helps catch videos that might not appear in search results immediately
         try {
             const channelUrl = `https://www.googleapis.com/youtube/v3/channels?key=${CONFIG.YOUTUBE_API_KEY}&id=${CONFIG.YOUTUBE_CHANNEL_ID}&part=contentDetails`;
-            const channelResponse = await makeHttpsRequest(channelUrl);
+            const channelResponse = await makeHttpsRequestWithRetry(channelUrl, 3, 'YouTube Channel API');
             
             if (channelResponse.items && channelResponse.items[0]) {
                 const uploadsPlaylistId = channelResponse.items[0].contentDetails.relatedPlaylists.uploads;
                 const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?key=${CONFIG.YOUTUBE_API_KEY}&playlistId=${uploadsPlaylistId}&part=snippet&order=date&maxResults=20`;
                 
-                const playlistResponse = await makeHttpsRequest(playlistUrl);
+                const playlistResponse = await makeHttpsRequestWithRetry(playlistUrl, 3, 'YouTube Playlist API');
                 const playlistItems = playlistResponse.items || [];
                 
                 console.log(`Found ${playlistItems.length} videos from uploads playlist`);
@@ -171,7 +205,20 @@ async function getRecentStreams() {
 
 function getCurrentIndexContent() {
     const indexPath = path.join(process.cwd(), 'index.html');
-    return fs.readFileSync(indexPath, 'utf8');
+    try {
+        if (!fs.existsSync(indexPath)) {
+            throw new Error(`Index file not found: ${indexPath}`);
+        }
+        const content = fs.readFileSync(indexPath, 'utf8');
+        if (!content || content.trim().length === 0) {
+            throw new Error('Index file is empty or corrupted');
+        }
+        return content;
+    } catch (error) {
+        console.error('❌ Failed to read index.html:', error.message);
+        console.error('This will prevent lecture assignments from working');
+        throw error; // Re-throw so GitHub Action fails cleanly
+    }
 }
 
 function updateIndexContent(content, classKey, week, lecture, videoUrl) {
@@ -191,7 +238,25 @@ function updateIndexContent(content, classKey, week, lecture, videoUrl) {
 
 function writeIndexContent(content) {
     const indexPath = path.join(process.cwd(), 'index.html');
-    fs.writeFileSync(indexPath, content, 'utf8');
+    try {
+        if (!content || typeof content !== 'string') {
+            throw new Error('Invalid content provided to write function');
+        }
+        
+        // Create backup before writing
+        const backupPath = `${indexPath}.backup`;
+        if (fs.existsSync(indexPath)) {
+            fs.copyFileSync(indexPath, backupPath);
+            console.log('📋 Created backup of index.html');
+        }
+        
+        fs.writeFileSync(indexPath, content, 'utf8');
+        console.log('✅ Successfully updated index.html');
+    } catch (error) {
+        console.error('❌ Failed to write index.html:', error.message);
+        console.error('Lecture assignments could not be saved');
+        throw error;
+    }
 }
 
 async function sendNotificationEmail(assignments) {
@@ -226,17 +291,74 @@ function getExistingVideoIds(indexContent) {
     return videoIds;
 }
 
+async function notifyOfFailure(error) {
+    try {
+        const subject = `🚨 Lecture Assignment Action Failed - ${new Date().toLocaleDateString()}`;
+        const body = `
+The YouTube lecture assignment automation failed:
+
+Error: ${error.message}
+
+Please check the GitHub Actions tab for details:
+https://github.com/caseyfarina/lecture-redirects/actions
+
+The system will try again at the next scheduled time (12 hours).
+
+Action Time: ${new Date().toISOString()}
+`;
+        
+        console.log('📧 Failure notification would be sent:', { subject, body });
+        // Email implementation would go here using nodemailer or similar
+        // For now, we log the notification details
+    } catch (notifyError) {
+        console.error('Failed to send failure notification:', notifyError.message);
+    }
+}
+
+function validateConfig() {
+    const required = [
+        { key: 'YOUTUBE_API_KEY', value: CONFIG.YOUTUBE_API_KEY, name: 'YouTube API Key' },
+        { key: 'YOUTUBE_CHANNEL_ID', value: CONFIG.YOUTUBE_CHANNEL_ID, name: 'YouTube Channel ID' },
+        { key: 'SEMESTER_START', value: CONFIG.SEMESTER_START, name: 'Semester Start Date' },
+        { key: 'SEMESTER_END', value: CONFIG.SEMESTER_END, name: 'Semester End Date' }
+    ];
+    
+    const missing = required.filter(item => !item.value || item.value.trim() === '');
+    
+    if (missing.length > 0) {
+        const missingNames = missing.map(item => item.name).join(', ');
+        throw new Error(`Missing required configuration: ${missingNames}`);
+    }
+    
+    // Validate date format
+    const startDate = new Date(CONFIG.SEMESTER_START);
+    const endDate = new Date(CONFIG.SEMESTER_END);
+    
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        throw new Error('Invalid semester dates - must be in YYYY-MM-DD format');
+    }
+    
+    if (startDate >= endDate) {
+        throw new Error('Semester start date must be before end date');
+    }
+    
+    console.log('✅ Configuration validated successfully');
+}
+
 async function main() {
     console.log('🤖 Starting YouTube Stream Monitor...');
     console.log(`Semester: ${CONFIG.SEMESTER_START} to ${CONFIG.SEMESTER_END}`);
     
     try {
+        // Validate configuration before starting
+        validateConfig();
+        
         // Get recent streams
         const streams = await getRecentStreams();
         console.log(`Found ${streams.length} recent streams`);
         
         if (!streams.length) {
-            console.log('No recent streams found');
+            console.log('No recent streams found - action completed successfully');
             return;
         }
         
@@ -310,11 +432,24 @@ async function main() {
                 await sendNotificationEmail(assignments);
             }
         } else {
-            console.log('No new assignments made');
+            console.log('No new assignments made - action completed successfully');
         }
         
+        console.log('✅ YouTube Stream Monitor completed successfully');
+        
     } catch (error) {
-        console.error('❌ Error in YouTube monitor:', error);
+        console.error('❌ Error in YouTube monitor:', error.message);
+        console.error('📊 Error details:', {
+            timestamp: new Date().toISOString(),
+            error: error.message,
+            stack: error.stack
+        });
+        
+        // Send notification about failure
+        await notifyOfFailure(error);
+        
+        // Exit with error code to fail the GitHub Action
+        console.error('🚨 ACTION FAILED - GitHub Action will show as failed');
         process.exit(1);
     }
 }

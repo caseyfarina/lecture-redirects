@@ -655,6 +655,91 @@
             }
         }
         
+        // Enhanced error handling with user-friendly messages
+        function handleAPIError(error, context = 'operation') {
+            console.error(`GitHub API Error in ${context}:`, error);
+            
+            let userMessage = `An error occurred during ${context}.`;
+            let suggestions = [];
+            
+            const errorMsg = error.message || error.toString();
+            
+            if (errorMsg.includes('404')) {
+                userMessage = 'Repository not found or access denied.';
+                suggestions = [
+                    'Check that your GitHub username and repository name are correct',
+                    'Verify your GitHub token has write permissions to the repository',
+                    'Make sure the repository exists and is accessible'
+                ];
+            } else if (errorMsg.includes('401') || errorMsg.includes('403')) {
+                userMessage = 'Authentication failed.';
+                suggestions = [
+                    'Check that your GitHub token is valid and not expired',
+                    'Verify the token has "Contents" write permissions',
+                    'Try clearing and re-entering your credentials',
+                    'Generate a new GitHub Personal Access Token if needed'
+                ];
+            } else if (errorMsg.includes('rate limit') || errorMsg.includes('API rate limit exceeded')) {
+                userMessage = 'GitHub API rate limit exceeded.';
+                suggestions = [
+                    'Wait a few minutes before trying again',
+                    'Consider spacing out your updates',
+                    'GitHub tokens have higher rate limits than anonymous requests'
+                ];
+            } else if (errorMsg.includes('network') || errorMsg.includes('timeout') || errorMsg.includes('ENOTFOUND')) {
+                userMessage = 'Network connection error.';
+                suggestions = [
+                    'Check your internet connection',
+                    'Try again in a few moments',
+                    'GitHub API may be temporarily unavailable'
+                ];
+            } else if (errorMsg.includes('422')) {
+                userMessage = 'Invalid data provided.';
+                suggestions = [
+                    'Check that all URLs are properly formatted',
+                    'Verify YouTube URLs are valid and accessible',
+                    'Make sure all required fields are filled'
+                ];
+            }
+            
+            showStatus(userMessage, 'error');
+            
+            if (suggestions.length > 0) {
+                setTimeout(() => {
+                    showStatus('💡 Suggestions: ' + suggestions.join(' • '), 'error');
+                }, 1000);
+            }
+        }
+        
+        // Enhanced loading state management
+        function setLoadingState(isLoading, context = 'operation') {
+            const buttons = document.querySelectorAll('.btn');
+            const inputs = document.querySelectorAll('input, select');
+            
+            buttons.forEach(btn => {
+                if (isLoading) {
+                    btn.disabled = true;
+                    if (!btn.dataset.originalText) {
+                        btn.dataset.originalText = btn.textContent;
+                    }
+                    btn.textContent = `${btn.dataset.originalText}...`;
+                } else {
+                    btn.disabled = false;
+                    if (btn.dataset.originalText) {
+                        btn.textContent = btn.dataset.originalText;
+                    }
+                }
+            });
+            
+            inputs.forEach(input => {
+                input.disabled = isLoading;
+            });
+            
+            if (isLoading) {
+                showStatus(`⏳ ${context}...`, 'loading');
+            }
+        }
+        
         // Select class
         function selectClass(classKey) {
             console.log('selectClass called with:', classKey);
@@ -892,7 +977,7 @@
             weekButton.textContent = 'Updating...';
             weekButton.disabled = true;
             
-            showStatus(`Updating Week ${week}...`, 'loading');
+            setLoadingState(true, `Updating Week ${week}`);
             
             try {
                 // Get current file
@@ -956,13 +1041,13 @@
                 showStatus(`Week ${week} updated successfully! ${Object.keys(weekLinks).length} links updated for ${CLASSES[currentClass]}.`, 'success');
                 
             } catch (error) {
-                console.error('Error updating week:', error);
-                showStatus(`Error updating Week ${week}: ${error.message}`, 'error');
+                handleAPIError(error, `Week ${week} update`);
             } finally {
                 // Reset button
                 weekButton.style.background = originalBackground;
                 weekButton.textContent = originalText;
                 weekButton.disabled = false;
+                setLoadingState(false);
             }
         }
         
@@ -1162,7 +1247,7 @@
                 return;
             }
             
-            showStatus('Updating repository...', 'loading');
+            setLoadingState(true, 'Updating repository');
             
             try {
                 // Get current file
@@ -1247,8 +1332,9 @@
                 showStatus(`Repository updated successfully! ${Object.keys(newLinks).length} links updated for ${CLASSES[currentClass]}.`, 'success');
                 
             } catch (error) {
-                console.error('Error updating repository:', error);
-                showStatus(`Error updating repository: ${error.message}`, 'error');
+                handleAPIError(error, 'repository update');
+            } finally {
+                setLoadingState(false);
             }
         }
         
