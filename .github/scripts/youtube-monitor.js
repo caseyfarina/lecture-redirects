@@ -378,7 +378,9 @@ async function main() {
             
             // CONFLICT PREVENTION: Skip if video already exists in database
             if (existingVideoIds.has(videoId)) {
-                console.log(`Skipping - video ${videoId} already exists in database (prevents reassignment)`);
+                console.log(`🚫 CONFLICT PREVENTION: Skipping video ${videoId} - already exists in database`);
+                console.log(`   Title: ${title}`);
+                console.log(`   This prevents duplicate assignments and cross-class contamination`);
                 continue;
             }
             
@@ -390,6 +392,30 @@ async function main() {
                 console.log(`Skipping - unable to parse class/date from: ${title}`);
                 continue;
             }
+            
+            // 🛡️ BULLETPROOF CLASS VALIDATION FAILSAFE
+            // Ensure video title actually contains the class it's being assigned to
+            const titleUpper = title.toUpperCase();
+            let classValidated = false;
+            
+            if (classKey === 'avc185' && (titleUpper.includes('AVC185') || titleUpper.includes('AVC 185'))) {
+                classValidated = true;
+            } else if (classKey === 'avc200' && (titleUpper.includes('AVC200') || titleUpper.includes('AVC 200'))) {
+                classValidated = true;
+            } else if (classKey === 'avc240' && (titleUpper.includes('AVC240') || titleUpper.includes('AVC 240'))) {
+                classValidated = true;
+            } else if (classKey === 'avc285' && (titleUpper.includes('AVC285') || titleUpper.includes('AVC 285'))) {
+                classValidated = true;
+            }
+            
+            if (!classValidated) {
+                console.log(`🚫 CLASS VALIDATION FAILED: Video "${title}" assigned to ${classKey.toUpperCase()} but title doesn't contain that class name`);
+                console.log(`   This prevents cross-class contamination - video will be skipped`);
+                continue;
+            }
+            
+            console.log(`✅ Class validation passed: ${title} → ${classKey.toUpperCase()}`);
+            
             
             // Calculate week and lecture numbers
             const week = calculateWeekNumber(streamDate, CONFIG.SEMESTER_START);
@@ -410,6 +436,10 @@ async function main() {
             
             // Update content
             indexContent = updateIndexContent(indexContent, classKey, week, lecture, videoUrl);
+            
+            // CRITICAL: Add this video ID to existing set to prevent duplicate assignments in same run
+            existingVideoIds.add(videoId);
+            console.log(`✅ Added ${videoId} to existing IDs to prevent duplicate assignment`);
             
             assignments.push({
                 title,
