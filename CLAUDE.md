@@ -58,6 +58,50 @@ function determineLectureNumber(streamDate, classKey, week, indexContent) {
 }
 ```
 
+### 4. Admin Panel Class-Specific Update Bug (FIXED)
+**Problem**: Admin panel `updateSingleWeek` function used global regex patterns, causing cross-class lecture URL contamination when updating individual weeks.
+
+**Root Cause**:
+```javascript
+// OLD - searches entire file for first match
+const lecturePattern = new RegExp(`('${lectureKey}':\\s*')[^']+(')`);
+```
+
+**Solution**:
+```javascript  
+// NEW - searches within specific class section only
+const classSpecificPattern = new RegExp(`('${currentClass}':\\s*\\{[\\s\\S]*?)('${lectureKey}':\\s*')[^']+(')`);
+```
+
+### 5. Video Reassignment Prevention (FIXED)
+**Problem**: When admin manually overwrites an auto-assigned video, GitHub Action would reassign the displaced video to the next available slot on subsequent runs.
+
+**Solution**: Added video ID tracking to prevent reassignment of existing videos:
+```javascript
+function getExistingVideoIds(indexContent) {
+    // Extract all video IDs that already exist in the database
+    const videoIds = new Set();
+    const videoPattern = /youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/g;
+    // ... extract and return all existing video IDs
+}
+
+// CONFLICT PREVENTION: Skip if video already exists in database
+if (existingVideoIds.has(videoId)) {
+    console.log(`Skipping - video ${videoId} already exists in database (prevents reassignment)`);
+    continue;
+}
+```
+
+### 6. Schedule Optimization (ENHANCED)  
+**Problem**: Every 15 minutes + 7-day window was excessive, causing 96 runs/day and processing same videos up to 672 times.
+
+**Solution**: Optimized for Arizona teaching schedule:
+- **Timing**: 7:30 AM and 7:30 PM Arizona time (perfect for 8 AM - 6:30 PM class schedule)
+- **Window**: Reduced from 7 days to 2 days  
+- **Efficiency**: 98% reduction in runs (2/day vs 96/day)
+- **API Usage**: Dramatically reduced YouTube API calls
+- **Commit History**: Clean twice-daily commits instead of constant updates
+
 ## System Architecture
 
 ### HTML Structure
@@ -71,12 +115,13 @@ lectureLinks = {
 ```
 
 ### GitHub Action Workflow
-- Runs every 15 minutes during semester
-- Searches YouTube API for videos published in last 7 days
-- Parses stream titles for class and date
-- Assigns to appropriate week/lecture slots
-- Only updates empty slots (doesn't overwrite existing assignments)
-- Commits changes automatically
+- **Optimized Schedule**: Runs twice daily at 7:30 AM and 7:30 PM Arizona time
+- **Smart Window**: Searches YouTube API for videos published in last 2 days  
+- **Video Processing**: Parses stream titles for class and date
+- **Conflict Prevention**: Skips videos already in database (prevents reassignments)
+- **Assignment Logic**: Assigns to appropriate week/lecture slots
+- **Slot Protection**: Only updates empty slots (doesn't overwrite existing assignments)
+- **Auto-commit**: Commits changes automatically with clean history
 
 ### Key Configuration
 ```javascript
@@ -110,7 +155,32 @@ Update the `CLASS_SCHEDULE` configuration in `.github/scripts/youtube-monitor.js
 - Diagnostic: `node debug-youtube.js` (with API credentials set)
 - Test parsing: Various test scripts created during session
 
+## Conflict Prevention System
+Added comprehensive conflict prevention between GitHub Action and Admin Panel:
+
+### GitHub Action Protection:
+- **Video ID Tracking**: Scans entire database for existing video IDs before processing
+- **Skip Existing Videos**: If video already assigned anywhere, skips processing entirely  
+- **No Reassignment**: Prevents displaced videos from being pushed to next available slot
+- **New Videos Only**: Only assigns truly NEW videos not found in database
+
+### Admin Panel Workflow:
+- Admin can safely overwrite any auto-assigned video
+- Displaced videos will NOT be reassigned by future GitHub Action runs
+- Manual corrections take permanent precedence over automation
+
+## Database Location and Updates
+**IMPORTANT**: The HTML database is stored on GitHub, not locally. When checking current lecture links, always check the live GitHub repository:
+- **Live Database**: https://raw.githubusercontent.com/caseyfarina/lecture-redirects/main/index.html
+- **Local files are NOT the source of truth** - they may be outdated
+
+The redirect links are updated through:
+1. **GitHub Action** - Automatically assigns new YouTube streams based on upload dates/titles
+2. **Admin Panel** - Manual assignments via the web interface at the GitHub Pages site
+
+When troubleshooting redirect issues, always verify the current state of the GitHub database, not local files.
+
 ## Admin Interface
 - Available at: `admin.html` 
 - Allows manual assignment/reassignment of lecture links
-- Auto-monitor won't overwrite existing assignments
+- Protected by conflict prevention system

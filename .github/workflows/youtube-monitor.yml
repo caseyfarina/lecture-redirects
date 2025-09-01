@@ -2,8 +2,9 @@ name: YouTube Stream Monitor
 
 on:
   schedule:
-    # Run every 15 minutes during semester (UTC time)
-    - cron: '*/15 * * * *'
+    # Run twice daily at 7:30 AM and 7:30 PM Arizona time (UTC time)
+    - cron: '30 14 * * *'  # 7:30 AM Arizona (14:30 UTC)
+    - cron: '30 2 * * *'   # 7:30 PM Arizona (02:30 UTC next day)
   workflow_dispatch: # Allow manual triggers
 
 env:
@@ -68,7 +69,7 @@ jobs:
         fi
 
     - name: Send weekly summary (Fridays only)
-      if: steps.semester-check.outputs.active == 'true' && github.event.schedule == '*/15 * * * *'
+      if: steps.semester-check.outputs.active == 'true' && github.event.schedule
       run: |
         if [ $(date -u +%u) -eq 5 ]; then
           echo "Sending weekly summary email..."

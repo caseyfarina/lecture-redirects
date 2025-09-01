@@ -915,16 +915,17 @@
                 
                 let updatedContent = currentContent;
                 
-                // Update each lecture link for this week
+                // Update each lecture link for this week - CLASS-SPECIFIC UPDATE
                 for (const [lectureKey, url] of Object.entries(weekLinks)) {
-                    const lecturePattern = new RegExp(`('${lectureKey}':\\s*')[^']+(')`);
-                    const match = updatedContent.match(lecturePattern);
+                    // Use class-specific pattern to avoid updating wrong class
+                    const classSpecificPattern = new RegExp(`('${currentClass}':\\s*\\{[\\s\\S]*?)('${lectureKey}':\\s*')[^']+(')`);
+                    const match = updatedContent.match(classSpecificPattern);
                     
                     if (match) {
-                        updatedContent = updatedContent.replace(lecturePattern, `$1${url}$2`);
-                        console.log(`Updated ${lectureKey} = ${url}`);
+                        updatedContent = updatedContent.replace(classSpecificPattern, `$1$2${url}$3`);
+                        console.log(`Updated ${currentClass} ${lectureKey} = ${url}`);
                     } else {
-                        console.warn(`Could not find pattern for ${lectureKey}`);
+                        console.warn(`Could not find class-specific pattern for ${currentClass} ${lectureKey}`);
                     }
                 }
                 
