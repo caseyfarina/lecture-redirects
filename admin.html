@@ -531,6 +531,74 @@
             color: #F20587;
         }
 
+        /* Library link styling */
+        .library-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #F2F2F2;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .library-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                transparent,
+                rgba(255, 255, 255, 0.1),
+                transparent);
+            transition: left 0.5s;
+        }
+
+        .library-link:hover::before {
+            left: 100%;
+        }
+
+        .library-link:hover {
+            transform: translateY(-2px);
+            border-color: rgba(242, 5, 68, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 12px rgba(242, 5, 68, 0.2);
+        }
+
+        .library-link[data-class="avc185"]:hover {
+            border-color: rgba(242, 5, 68, 0.6);
+        }
+
+        .library-link[data-class="avc200"]:hover {
+            border-color: rgba(124, 5, 242, 0.6);
+        }
+
+        .library-link[data-class="avc240"]:hover {
+            border-color: rgba(5, 108, 242, 0.6);
+        }
+
+        .library-link[data-class="avc285"]:hover {
+            border-color: rgba(242, 5, 135, 0.6);
+        }
+
+        .library-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .library-link:hover .library-icon {
+            transform: scale(1.1);
+        }
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .container {
@@ -567,6 +635,24 @@
             <div class="class-indicator" id="classIndicator" style="display: none;">AVC 185</div>
             <h1>Multi-Class Lecture Links Admin</h1>
             <p>Manage YouTube lecture links for all your classes</p>
+        </div>
+
+        <div class="section">
+            <h3>View Lecture Libraries</h3>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <a href="avc185.html" target="_blank" class="library-link" data-class="avc185">
+                    <span class="library-icon">📚</span> AVC 185 Library
+                </a>
+                <a href="avc200.html" target="_blank" class="library-link" data-class="avc200">
+                    <span class="library-icon">📚</span> AVC 200 Library
+                </a>
+                <a href="avc240.html" target="_blank" class="library-link" data-class="avc240">
+                    <span class="library-icon">📚</span> AVC 240 Library
+                </a>
+                <a href="avc285.html" target="_blank" class="library-link" data-class="avc285">
+                    <span class="library-icon">📚</span> AVC 285 Library
+                </a>
+            </div>
         </div>
         
         <div class="section">
